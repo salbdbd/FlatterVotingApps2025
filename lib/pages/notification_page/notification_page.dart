@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:association/pages/notification_page/componets/get_WMessage_Model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:share/share.dart';
+import 'package:share_plus/share_plus.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../services/api_service.dart';
@@ -46,6 +46,7 @@ class _NotificationPageState extends State<NotificationPage> {
 
     if (response.statusCode == 200) {
       String responseBody = await response.stream.bytesToString();
+      
 
       // Parse the JSON and create a List<NotificationModel>
       List<dynamic> decodedJsonList = json.decode(responseBody);

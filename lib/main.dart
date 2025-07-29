@@ -1,3 +1,6 @@
+import 'package:association/pages/Home/pdf_viewer_screen.dart';
+import 'package:association/pages/dashboard.dart';
+import 'package:association/pages/voting_page/voting_page.dart';
 import 'package:association/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';

@@ -18,12 +18,11 @@ class SplashScreen extends StatefulWidget {
   _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
 
-  @override
-  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,7 +37,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           ),
           // Positioned widget placed directly inside Stack
           Positioned(
-            top: MediaQuery.of(context).size.height / 3, // Adjust the top position as needed
+            top: MediaQuery.of(context).size.height /
+                3, // Adjust the top position as needed
             left: 0,
             right: 0,
             child: ScaleTransition(
@@ -60,7 +60,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       ),
     );
   }
-
 
   @override
   void dispose() {
@@ -148,7 +147,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             if (decodedUserData is Map<String, dynamic>) {
               var loginModel = Login.fromJson(decodedUserData);
 
-              print('Decoded userData: $loginModel'); // Add this line for debugging
+              print(
+                  'Decoded userData: $loginModel'); // Add this line for debugging
 
               // Pass the actual data to IndexingPage
               Get.off(IndexingPage(userData: loginModel));
@@ -172,7 +172,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     // If no saved credentials are found or encountered any error, navigate to the login screen
     Get.off(LoginPage());
   }
-
 
   Future<bool> checkIfUserIsLoggedIn() async {
     // Check if the authentication token is present in Hive

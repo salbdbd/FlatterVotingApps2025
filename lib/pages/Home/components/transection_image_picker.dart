@@ -34,20 +34,21 @@ class CustomImagePicker extends StatelessWidget {
               Text(
                 heading,
                 style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16,
-                  height: 1.5,
-                  color: Colors.white
-                ),
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                    height: 1.5,
+                    color: Colors.white),
               ),
             ],
           ),
           const SizedBox(height: 5),
           DottedBorder(
-            dashPattern: [8, 4],
-            strokeWidth: 2,
-            color: const Color(0xff9CBEE5),
+            options: const RectDottedBorderOptions(
+              dashPattern: [8, 4],
+              strokeWidth: 2,
+              color: Color(0xff9CBEE5),
+            ),
             child: GestureDetector(
               onTap: () {
                 _showImageSourceActionSheet(context);
@@ -58,38 +59,38 @@ class CustomImagePicker extends StatelessWidget {
                 child: Center(
                   child: selectedImage == null
                       ? const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.add_photo_alternate_outlined,
-                        color: Color(0xff1D71B8),
-                        size: 24,
-                      ),
-                      SizedBox(width: 5),
-                      Text(
-                        "Upload Image",
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w400,
-                          fontSize: 14,
-                          height: 20 / 14,
-                          color: Color(0xFF1D71B8),
-                        ),
-                      ),
-                    ],
-                  )
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add_photo_alternate_outlined,
+                              color: Color(0xff1D71B8),
+                              size: 24,
+                            ),
+                            SizedBox(width: 5),
+                            Text(
+                              "Upload Image",
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w400,
+                                fontSize: 14,
+                                height: 20 / 14,
+                                color: Color(0xFF1D71B8),
+                              ),
+                            ),
+                          ],
+                        )
                       : Container(
-                    height: 140,
-                    width: 140,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Image.file(
-                      selectedImage!,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                          height: 140,
+                          width: 140,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Image.file(
+                            selectedImage!,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                 ),
               ),
             ),

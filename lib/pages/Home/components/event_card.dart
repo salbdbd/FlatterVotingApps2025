@@ -116,7 +116,7 @@ class _CustomEventCardState extends State<CustomEventCard> {
                 right: 0,
                 child: DotsIndicator(
                   dotsCount: widget.dotsCount ?? 0,
-                  position: position,
+                  position: position.toDouble(),
                   decorator: const DotsDecorator(
                     activeColor: Colors.white,
                     size: Size.square(8.0),
