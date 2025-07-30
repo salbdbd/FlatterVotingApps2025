@@ -23,7 +23,8 @@ class GetUserCompanyModel {
     this.memberId,
     this.name,
     this.compId,
-    this.logo = "assets/images/TigerHRMS.png", // Default logo path
+    this.logo,
+    //"assets/images/TigerHRMS.png", // Default logo path
   });
 
   factory GetUserCompanyModel.fromJson(Map<String, dynamic> json) =>
@@ -31,7 +32,9 @@ class GetUserCompanyModel {
         userId: json["userId"],
         memberId: json["memberId"],
         name: json["name"],
-        compId: json["compId"],
+        compId: json["compId"] != null
+            ? int.tryParse(json["compId"].toString())
+            : null,
         logo: json["logo"],
       );
 

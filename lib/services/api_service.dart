@@ -1,5 +1,5 @@
 class BaseUrl {
-  //static const String baseUrl = 'http://175.29.186.86:7022';
+  //static const String baseUrl = 'http://*************:7022';
   static const String baseUrl = 'http://103.125.253.59:2004';
   static const String authorization =
       'Basic YWRtaW5pc3RyYXRvcjpBQyFAIyQxMjQzdXNlcg==';

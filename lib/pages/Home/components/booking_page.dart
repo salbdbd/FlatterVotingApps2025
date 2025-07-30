@@ -65,8 +65,6 @@ class _BookingPageState extends State<BookingPage> {
     fetchGetTransactionEntrySubForm();
   }
 
-
-
   Future<void> fetchGetTransactionEntrySubForm() async {
     setState(() {
       _isLoading = true;
@@ -75,8 +73,8 @@ class _BookingPageState extends State<BookingPage> {
     try {
       int compId = widget.userDetails?.selectedCompanyData.compId ?? 0;
 
-
-      String url = '${BaseUrl.baseUrl}/api/v1/Get_TransactionEntrySubForm/$compId/${widget.accountID}';
+      String url =
+          '${BaseUrl.baseUrl}/api/v1/Get_TransactionEntrySubForm/$compId/${widget.accountID}';
       print("urt Get_TransactionEntrySubForm = $url");
 
       http.Response response = await http.get(Uri.parse(url), headers: {
@@ -109,11 +107,10 @@ class _BookingPageState extends State<BookingPage> {
     }
   }
 
-
-  List<Map<String, dynamic>> transactionDetailsToJson(List<TransactionDetailsModel> details) {
+  List<Map<String, dynamic>> transactionDetailsToJson(
+      List<TransactionDetailsModel> details) {
     return details.map((detail) => detail.toJson()).toList();
   }
-
 
   Future<void> saveManualTransaction({
     required String transactionName,
@@ -124,7 +121,6 @@ class _BookingPageState extends State<BookingPage> {
     required String transactionId,
     String? imageBase64,
   }) async {
-
     final url = Uri.parse('${BaseUrl.baseUrl}/api/v1/SaveTransactionEntryForm');
 
     final headers = {
@@ -132,18 +128,18 @@ class _BookingPageState extends State<BookingPage> {
       'Authorization': '${BaseUrl.authorization}',
     };
 
-    int totalQuantity = selectedOptions.fold(0, (sum, item) => sum + item.quantity);
-
+    int totalQuantity =
+        selectedOptions.fold(0, (sum, item) => sum + item.quantity);
 
     //sample
     //    {"id": 0, "memberId": 0, "amount": 0, "transactionTypeId": 0, "transactionId": "string",
     //    "transactionName": "string", "serviceDateId": 0, "approvedBy": 0, "createdBy": 0, "date": "string",
-  //   "qty": 0, "total": 0, "totalAmount": 0, "note": "string", "compId": 0, "status": 0, "name": "string",
-  //   "serviceName": "string", "billProcessId": 0, "fileAttach": "string",
+    //   "qty": 0, "total": 0, "totalAmount": 0, "note": "string", "compId": 0, "status": 0, "name": "string",
+    //   "serviceName": "string", "billProcessId": 0, "fileAttach": "string",
     //
     //   "transctionDetails": [{"id": 0, "transactionId": 0, "compId": 0,"subServiceId": 0,
-  //   "amount": 0, "qty": 0,"subServiceName": "string"}]
-  // }
+    //   "amount": 0, "qty": 0,"subServiceName": "string"}]
+    // }
 
     final requestBody = jsonEncode({
       "id": 0,
@@ -166,7 +162,7 @@ class _BookingPageState extends State<BookingPage> {
       "serviceName": selectedOptions.map((option) => option.label).join(', '),
       "billProcessId": 0,
       "fileAttach": imageBase64 ?? "",
-      "transctionDetails":transactionDetailsToJson(transctionDetails)
+      "transctionDetails": transactionDetailsToJson(transctionDetails)
     });
 
     print('Request Body: $requestBody');
@@ -187,9 +183,9 @@ class _BookingPageState extends State<BookingPage> {
         await fetchGetWMemberAccountTransaction(widget.eventId);
 
         _isLoading = false;
-      }
-      else {
-        print('Failed to save transaction. Status code: ${response.statusCode}');
+      } else {
+        print(
+            'Failed to save transaction. Status code: ${response.statusCode}');
         print('Response body: ${response.body}');
         _isLoading = false;
       }
@@ -209,9 +205,11 @@ class _BookingPageState extends State<BookingPage> {
     try {
       int compId = widget.userDetails?.selectedCompanyData.compId ?? 0;
       int userId = widget.userDetails?.selectedCompanyData.userId ?? 0;
-      int memberId = widget.userDetails?.selectedCompanyData.memberId ?? 0;//widget.userDetails?.userData.memberId ?? 0;
+      int memberId = widget.userDetails?.selectedCompanyData.memberId ??
+          0; //widget.userDetails?.userData.memberId ?? 0;
       print("memberId = ${memberId}");
-      String url = '${BaseUrl.baseUrl}/api/v1/W_MemberAccountTransaction/$compId/$memberId';
+      String url =
+          '${BaseUrl.baseUrl}/api/v1/W_MemberAccountTransaction/$compId/$memberId';
 
       print('Request URL: $url'); // Print the URL
 
@@ -231,12 +229,13 @@ class _BookingPageState extends State<BookingPage> {
               .toList();
         });
 
-
         if (EventsDetails.isNotEmpty) {
           // Assuming your model has fields like eventId and billId
-          List<GetWMemberAccountTransactionModel> filteredEvents = EventsDetails
-              .where((event) => event.accountId == eventId) // Adjust this to match your model
-              .toList();
+          List<GetWMemberAccountTransactionModel> filteredEvents =
+              EventsDetails.where((event) =>
+                      event.accountId ==
+                      eventId) // Adjust this to match your model
+                  .toList();
 
           if (filteredEvents.isNotEmpty) {
             int billID = filteredEvents.first.billId ?? 0; // Get the billId
@@ -246,7 +245,6 @@ class _BookingPageState extends State<BookingPage> {
             print('No data found for eventId: $eventId');
           }
         }
-
       } else {
         print('Request failed with status: ${response.statusCode}');
       }
@@ -259,12 +257,10 @@ class _BookingPageState extends State<BookingPage> {
     }
   }
 
-
   Future<List<GetBillReceiptModel>> fetchGetBillReceipt(int billID) async {
-
     try {
-
-      String url = '${BaseUrl.baseUrl}/api/v1/GetBillReceipt/${widget.userDetails!.selectedCompanyData.compId}/$billID';
+      String url =
+          '${BaseUrl.baseUrl}/api/v1/GetBillReceipt/${widget.userDetails!.selectedCompanyData.compId}/$billID';
       print("urt Get_TransactionEntrySubForm = $url");
 
       http.Response response = await http.get(Uri.parse(url), headers: {
@@ -274,7 +270,9 @@ class _BookingPageState extends State<BookingPage> {
 
       if (response.statusCode == 200) {
         List<dynamic> jsonResponse = jsonDecode(response.body);
-        List<GetBillReceiptModel> billReceipts = jsonResponse.map((data) => GetBillReceiptModel.fromJson(data)).toList();
+        List<GetBillReceiptModel> billReceipts = jsonResponse
+            .map((data) => GetBillReceiptModel.fromJson(data))
+            .toList();
 
         Navigator.pushReplacement(
           context,
@@ -345,8 +343,7 @@ class _BookingPageState extends State<BookingPage> {
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(5),
-                        border: Border.all(width: 2, color: Colors.white)
-                    ),
+                        border: Border.all(width: 2, color: Colors.white)),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -357,7 +354,10 @@ class _BookingPageState extends State<BookingPage> {
                             );
                           }).toList(),
                         ),
-                        const Icon(Icons.arrow_drop_down_outlined, color: Colors.white,)
+                        const Icon(
+                          Icons.arrow_drop_down_outlined,
+                          color: Colors.white,
+                        )
                       ],
                     ),
                   ),
@@ -381,8 +381,9 @@ class _BookingPageState extends State<BookingPage> {
                 filled: false,
                 prefixIcon: Icons.monetization_on_outlined,
               ),
-              const SizedBox(height: 20,),
-
+              const SizedBox(
+                height: 20,
+              ),
               Column(
                 children: [
                   Row(
@@ -431,7 +432,9 @@ class _BookingPageState extends State<BookingPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10,),
+                  const SizedBox(
+                    height: 10,
+                  ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -453,17 +456,20 @@ class _BookingPageState extends State<BookingPage> {
                       ),
                       const Flexible(
                         flex: 3,
-                        child: SizedBox(width: 100,),
+                        child: SizedBox(
+                          width: 100,
+                        ),
                       ),
                       const Flexible(
                         flex: 3,
-                        child: SizedBox(width: 100,),
+                        child: SizedBox(
+                          width: 100,
+                        ),
                       ),
                     ],
                   ),
                 ],
               ),
-
               if (selectedPaymentMethod == 'Manual') ...[
                 CustomTextFieldsforProfile(
                   controller: transactionIdController,
@@ -475,9 +481,8 @@ class _BookingPageState extends State<BookingPage> {
                   prefixIcon: Icons.money_sharp,
                 ),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: []
-                ),
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: []),
                 CustomImagePicker(
                   heading: 'Transaction Id ScreenShot',
                   selectedImage: selectedImageTransaction,
@@ -487,16 +492,17 @@ class _BookingPageState extends State<BookingPage> {
                     });
                   },
                 ),
-
-                SizedBox(height: 20,),
-
+                SizedBox(
+                  height: 20,
+                ),
                 Container(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () async {
                       String imageBase64 = '';
                       if (selectedImageTransaction != null) {
-                        final bytes = await selectedImageTransaction!.readAsBytes();
+                        final bytes =
+                            await selectedImageTransaction!.readAsBytes();
                         imageBase64 = base64Encode(bytes);
                       }
 
@@ -537,16 +543,13 @@ class _BookingPageState extends State<BookingPage> {
                     ),
                   ),
                 )
-
               ],
-
             ],
           ),
         ),
       ),
     );
   }
-
 
   void _showMultiSelectBottomSheet() {
     showModalBottomSheet(
@@ -563,7 +566,8 @@ class _BookingPageState extends State<BookingPage> {
                     children: EventPeople.map((person) {
                       String label = person.subServiceName!;
                       int id = person.id!;
-                      double unitPrice = person.unitPrice ?? 0; // Assuming unitPrice is a double
+                      double unitPrice = person.unitPrice ??
+                          0; // Assuming unitPrice is a double
                       return ListTile(
                         leading: Checkbox(
                           value: optionSelected[label],
@@ -572,9 +576,12 @@ class _BookingPageState extends State<BookingPage> {
                               optionSelected[label] = value!;
                               if (value) {
                                 if (id == 3) {
-                                  optionCounts[label] = 1; // Set default value to 1 if id is 3 or 4
+                                  optionCounts[label] =
+                                      1; // Set default value to 1 if id is 3 or 4
                                 } else {
-                                  optionCounts[label] = (optionCounts[label] ?? 0) + 1; // Increment if not 3 or 4
+                                  optionCounts[label] =
+                                      (optionCounts[label] ?? 0) +
+                                          1; // Increment if not 3 or 4
                                 }
                               } else {
                                 optionCounts[label] = 0;
@@ -583,31 +590,41 @@ class _BookingPageState extends State<BookingPage> {
                           },
                         ),
                         title: Text('$label ($unitPrice TK)'),
-                        trailing: optionSelected[label]! // Show buttons only if option is selected
+                        trailing: optionSelected[
+                                label]! // Show buttons only if option is selected
                             ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            IconButton(
-                              icon: const Icon(Icons.remove),
-                              onPressed: id == 3 ? null : () { // Disable if id is 3 or 4
-                                setModalState(() {
-                                  if (optionCounts[label]! > 1) { // Prevent decrementing below 1
-                                    optionCounts[label] = optionCounts[label]! - 1;
-                                  }
-                                });
-                              },
-                            ),
-                            Text(optionCounts[label].toString()),
-                            IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: id == 3 ? null : () { // Disable if id is 3 or 4
-                                setModalState(() {
-                                  optionCounts[label] = optionCounts[label]! + 1;
-                                });
-                              },
-                            ),
-                          ],
-                        )
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  IconButton(
+                                    icon: const Icon(Icons.remove),
+                                    onPressed: id == 3
+                                        ? null
+                                        : () {
+                                            // Disable if id is 3 or 4
+                                            setModalState(() {
+                                              if (optionCounts[label]! > 1) {
+                                                // Prevent decrementing below 1
+                                                optionCounts[label] =
+                                                    optionCounts[label]! - 1;
+                                              }
+                                            });
+                                          },
+                                  ),
+                                  Text(optionCounts[label].toString()),
+                                  IconButton(
+                                    icon: const Icon(Icons.add),
+                                    onPressed: id == 3
+                                        ? null
+                                        : () {
+                                            // Disable if id is 3 or 4
+                                            setModalState(() {
+                                              optionCounts[label] =
+                                                  optionCounts[label]! + 1;
+                                            });
+                                          },
+                                  ),
+                                ],
+                              )
                             : null, // Hide buttons if option is not selected
                       );
                     }).toList(),
@@ -615,37 +632,37 @@ class _BookingPageState extends State<BookingPage> {
                   ElevatedButton(
                     onPressed: () {
                       setState(() {
-
                         //initializing selected options
                         _selectedOptions = EventPeople.where((person) {
                           return optionCounts[person.subServiceName!]! > 0;
                         }).map((person) {
                           return ValueItem(
-                            label: '${person.subServiceName} ${optionCounts[person.subServiceName!]} (${(person.unitPrice! * optionCounts[person.subServiceName!]!).toStringAsFixed(2)} TK)',
+                            label:
+                                '${person.subServiceName} ${optionCounts[person.subServiceName!]} (${(person.unitPrice! * optionCounts[person.subServiceName!]!).toStringAsFixed(2)} TK)',
                             value: person.subServiceName!,
                             quantity: optionCounts[person.subServiceName!]!,
                           );
                         }).toList();
 
                         //initializing list of transaction
-                        transctionDetails = EventPeople.where((person){
-                          return  optionCounts[person.subServiceName!]! > 0;
-                        }).map((transaction){
+                        transctionDetails = EventPeople.where((person) {
+                          return optionCounts[person.subServiceName!]! > 0;
+                        }).map((transaction) {
                           return TransactionDetailsModel(
                             id: transaction.id,
-                            transactionId: transactionIdController.text.toString(),
-                            compId: widget.userDetails!.selectedCompanyData.compId,
+                            transactionId:
+                                transactionIdController.text.toString(),
+                            compId:
+                                widget.userDetails!.selectedCompanyData.compId,
                             subServiceId: transaction.serviceId,
                             amount: transaction.unitPrice,
                             qty: optionCounts[transaction.subServiceName!]!,
                             subServiceName: transaction.subServiceName,
-
                           );
                         }).toList();
 
-                        print("\n\nTransaction Details : $transctionDetails\n\n");
-
-
+                        print(
+                            "\n\nTransaction Details : $transctionDetails\n\n");
 
                         print("Pressed");
                         print("Selected options : $_selectedOptions");
@@ -674,7 +691,8 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   void _calculateContainerHeight() {
-    double totalHeight = _selectedOptions.length * 10.0; // Assuming each chip is 40.0 in height
+    double totalHeight =
+        _selectedOptions.length * 10.0; // Assuming each chip is 40.0 in height
     setState(() {
       _containerHeight = totalHeight;
     });
@@ -693,7 +711,6 @@ class ValueItem {
   }
 }
 
-
 class TransactionDetailsModel {
   final int? id;
   final String? transactionId;
@@ -711,8 +728,7 @@ class TransactionDetailsModel {
     required this.amount,
     required this.qty,
     required this.subServiceName,
-
-});
+  });
 
   Map<String, dynamic> toJson() {
     return {
@@ -741,12 +757,7 @@ Transaction Details(
 )
     ''';
   }
-
 }
-
-
-
-
 
 class CommonCustomBtn extends StatelessWidget {
   final VoidCallback onPressed;
@@ -814,4 +825,3 @@ class CommonCustomBtn extends StatelessWidget {
     );
   }
 }
-
