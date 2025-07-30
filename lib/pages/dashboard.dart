@@ -19,7 +19,8 @@ class Dashboard extends StatefulWidget {
   State<Dashboard> createState() => _DashboardState();
 }
 
-class _DashboardState extends State<Dashboard> with SingleTickerProviderStateMixin {
+class _DashboardState extends State<Dashboard>
+    with SingleTickerProviderStateMixin {
   late PageController pageController;
   int indexSelected = 0;
   int unreadNotificationCount = 0;
@@ -41,7 +42,9 @@ class _DashboardState extends State<Dashboard> with SingleTickerProviderStateMix
     return WillPopScope(
       onWillPop: () async {
         if (indexSelected > 0) {
-          pageController.animateToPage(indexSelected - 1, duration: const Duration(milliseconds: 100), curve: Curves.easeInOut);
+          pageController.animateToPage(indexSelected - 1,
+              duration: const Duration(milliseconds: 100),
+              curve: Curves.easeInOut);
           return false;
         } else {
           return true;
@@ -60,9 +63,13 @@ class _DashboardState extends State<Dashboard> with SingleTickerProviderStateMix
         body: GestureDetector(
           onHorizontalDragEnd: (details) {
             if (details.primaryVelocity! > 0 && indexSelected > 0) {
-              pageController.previousPage(duration: const Duration(milliseconds: 100), curve: Curves.easeInOut);
+              pageController.previousPage(
+                  duration: const Duration(milliseconds: 100),
+                  curve: Curves.easeInOut);
             } else if (details.primaryVelocity! < 0 && indexSelected < 3) {
-              pageController.nextPage(duration: const Duration(milliseconds: 100), curve: Curves.easeInOut);
+              pageController.nextPage(
+                  duration: const Duration(milliseconds: 100),
+                  curve: Curves.easeInOut);
             }
           },
           child: PageView(
@@ -76,11 +83,12 @@ class _DashboardState extends State<Dashboard> with SingleTickerProviderStateMix
             children: [
               HomePage(userDetails: widget.userDetails),
               SandOtpPage(userDetails: widget.userDetails),
-              NotificationPage(onNewNotification: (count) {
-                setState(() {
-                  unreadNotificationCount = count;
-                });
-              },
+              NotificationPage(
+                  onNewNotification: (count) {
+                    setState(() {
+                      unreadNotificationCount = count;
+                    });
+                  },
                   userDetails: widget.userDetails),
               ProfilePage(userDetails: widget.userDetails),
             ],
@@ -90,7 +98,8 @@ class _DashboardState extends State<Dashboard> with SingleTickerProviderStateMix
           items: [
             _buildNavItem(Icons.home, "Home", 0),
             _buildNavItem(Icons.fingerprint, "Voting", 1),
-            _buildNavItem(Icons.notification_important_rounded, "Notification", 2, unreadNotificationCount),
+            _buildNavItem(Icons.notification_important_rounded, "Notification",
+                2, unreadNotificationCount),
             _buildNavItem(Icons.account_circle, "Profile", 3),
           ],
           elevation: 0,
@@ -102,14 +111,17 @@ class _DashboardState extends State<Dashboard> with SingleTickerProviderStateMix
           selectedLabelStyle: const TextStyle(fontSize: 12),
           type: BottomNavigationBarType.fixed,
           onTap: (index) {
-            pageController.animateToPage(index, duration: const Duration(milliseconds: 100), curve: Curves.easeInOut);
+            pageController.animateToPage(index,
+                duration: const Duration(milliseconds: 100),
+                curve: Curves.easeInOut);
           },
         ),
       ),
     );
   }
 
-  BottomNavigationBarItem _buildNavItem(IconData icon, String label, int index, [int badgeCount = 0]) {
+  BottomNavigationBarItem _buildNavItem(IconData icon, String label, int index,
+      [int badgeCount = 0]) {
     return BottomNavigationBarItem(
       icon: Container(
         decoration: BoxDecoration(
@@ -176,14 +188,23 @@ class _DashboardState extends State<Dashboard> with SingleTickerProviderStateMix
   }
 
   Widget _buildLeadingIcon() {
-    if (indexSelected == 0 && widget.userDetails?.selectedCompanyData.logo != null) {
-      final decodedBytes = base64Decode(widget.userDetails!.selectedCompanyData.logo!);
-      return Image.memory(decodedBytes, color: Colors.white,width: 50, height: 50,);
+    if (indexSelected == 0 &&
+        widget.userDetails?.selectedCompanyData.logo != null) {
+      final decodedBytes =
+          base64Decode(widget.userDetails!.selectedCompanyData.logo!);
+      return Image.memory(
+        decodedBytes,
+        color: Colors.white,
+        width: 50,
+        height: 50,
+      );
     } else {
       return IconButton(
         onPressed: () {
           if (indexSelected > 0) {
-            pageController.animateToPage(indexSelected - 1, duration: const Duration(milliseconds: 100), curve: Curves.easeInOut);
+            pageController.animateToPage(indexSelected - 1,
+                duration: const Duration(milliseconds: 100),
+                curve: Curves.easeInOut);
           } else if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();
           }

@@ -151,7 +151,7 @@ class _SplashScreenState extends State<SplashScreen>
                   'Decoded userData: $loginModel'); // Add this line for debugging
 
               // Pass the actual data to IndexingPage
-              Get.off(IndexingPage(userData: loginModel));
+              Get.off(() => IndexingPage(userData: loginModel));
               return; // Exit the method after navigation
             } else {
               print('Decoded userData is not a Map');
@@ -170,7 +170,7 @@ class _SplashScreenState extends State<SplashScreen>
     }
 
     // If no saved credentials are found or encountered any error, navigate to the login screen
-    Get.off(LoginPage());
+    Get.off(() => LoginPage());
   }
 
   Future<bool> checkIfUserIsLoggedIn() async {
@@ -188,6 +188,6 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     // Navigate to the login screen
-    Get.off(LoginPage());
+    Get.off(() => LoginPage());
   }
 }

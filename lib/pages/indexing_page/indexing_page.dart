@@ -17,7 +17,6 @@ class IndexingPage extends StatefulWidget {
   State<IndexingPage> createState() => _IndexingPageState();
 }
 
-
 class _IndexingPageState extends State<IndexingPage> {
   late Future<List<GetUserCompanyModel>> userCompanyData;
 
@@ -27,7 +26,8 @@ class _IndexingPageState extends State<IndexingPage> {
     userCompanyData = fetchUserCompanyData();
   }
 
-  Future<void> _navigateToDashboard(List<GetUserCompanyModel> userCompanies) async {
+  Future<void> _navigateToDashboard(
+      List<GetUserCompanyModel> userCompanies) async {
     if (userCompanies.length == 1) {
       UserDetails userDetails = UserDetails(
         userData: widget.userData!,
@@ -42,7 +42,8 @@ class _IndexingPageState extends State<IndexingPage> {
   Future<List<GetUserCompanyModel>> fetchUserCompanyData() async {
     try {
       final response = await http.get(
-        Uri.parse('${BaseUrl.baseUrl}/api/v1/Get_UserCompany/${widget.userData!.userName}'),
+        Uri.parse(
+            '${BaseUrl.baseUrl}/api/v1/Get_UserCompany/${widget.userData!.userName}'),
         headers: {
           'accept': '*/*',
           'Authorization': '${BaseUrl.authorization}',
@@ -51,7 +52,8 @@ class _IndexingPageState extends State<IndexingPage> {
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonResponse = json.decode(response.body);
-        List<GetUserCompanyModel> userCompanies = List<GetUserCompanyModel>.from(
+        List<GetUserCompanyModel> userCompanies =
+            List<GetUserCompanyModel>.from(
           jsonResponse.map((data) => GetUserCompanyModel.fromJson(data)),
         );
 
@@ -100,7 +102,8 @@ class _IndexingPageState extends State<IndexingPage> {
         future: userCompanyData,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: LoadingDialog(messageText: "Allowing you to login..."));
+            return Center(
+                child: LoadingDialog(messageText: "Allowing you to login..."));
           } else if (snapshot.hasError) {
             return Text('Error: ${snapshot.error}');
           } else {
@@ -121,7 +124,8 @@ class _IndexingPageState extends State<IndexingPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => Dashboard(userDetails: userDetails),
+                            builder: (context) =>
+                                Dashboard(userDetails: userDetails),
                           ),
                         );
                       },
@@ -130,7 +134,8 @@ class _IndexingPageState extends State<IndexingPage> {
                         width: screenWidth,
                         decoration: BoxDecoration(
                           color: Color(0xff15212D),
-                          border: Border.all(width: 2, color: Color(0xff15212D)),
+                          border:
+                              Border.all(width: 2, color: Color(0xff15212D)),
                           borderRadius: BorderRadius.all(Radius.circular(10)),
                         ),
                         child: Container(
