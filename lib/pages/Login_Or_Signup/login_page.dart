@@ -359,22 +359,29 @@ class _LoginPageState extends State<LoginPage> {
     String? savedPassword = prefs.getString('password');
     String? savedCredentialsListString = prefs.getString('userCredentialsList');
 
-    // Convert the saved string back to a list of maps
-    List<dynamic> savedCredentialsList =
-        // json.decode(savedCredentialsListString);
-        json.decode(savedCredentialsListString!);
-
     // Initialize the userCredentialsList as an empty list
     userCredentialsList = [];
 
-    // Iterate through the list and add each credential to userCredentialsList
-    for (var item in savedCredentialsList) {
-      if (item is Map<String, dynamic>) {
-        userCredentialsList.add(Map<String, String>.from(item));
+    // Check if savedCredentialsListString is not null before decoding
+    if (savedCredentialsListString != null && savedCredentialsListString.isNotEmpty) {
+      try {
+        // Convert the saved string back to a list of maps
+        List<dynamic> savedCredentialsList = json.decode(savedCredentialsListString);
+
+        // Iterate through the list and add each credential to userCredentialsList
+        for (var item in savedCredentialsList) {
+          if (item is Map<String, dynamic>) {
+            userCredentialsList.add(Map<String, String>.from(item));
+          }
+        }
+      } catch (e) {
+        print('Error decoding saved credentials: $e');
+        // Clear the corrupted data
+        await prefs.remove('userCredentialsList');
       }
     }
 
-    if (userCredentialsList.isNotEmpty) {
+    if (userCredentialsList.isNotEmpty && mounted) {
       setState(() {
         userNameController.text = userCredentialsList[0]['userName'] ?? '';
         passwordController.text = userCredentialsList[0]['password'] ?? '';
@@ -401,5 +408,12 @@ class _LoginPageState extends State<LoginPage> {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    userNameController.dispose();
+    passwordController.dispose();
+    super.dispose();
   }
 }

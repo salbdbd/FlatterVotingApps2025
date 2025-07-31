@@ -46,16 +46,18 @@ class _VotingPageState extends State<VotingPage>
         List<Designation> parsedDesignations = List<Designation>.from(data
             .map((designationData) => Designation.fromJson(designationData)));
 
-        setState(() {
-          designations = parsedDesignations
-              .map((designation) => {
-                    'designationID': designation.designationID,
-                    'description': designation.description,
-                  })
-              .toList();
-          isPresidentVisibleList =
-              List.generate(parsedDesignations.length, (index) => false);
-        });
+        if (mounted) {
+          setState(() {
+            designations = parsedDesignations
+                .map((designation) => {
+                      'designationID': designation.designationID,
+                      'description': designation.description,
+                    })
+                .toList();
+            isPresidentVisibleList =
+                List.generate(parsedDesignations.length, (index) => false);
+          });
+        }
 
         // Print all fetched data
         print('Fetched Designations:');
@@ -95,9 +97,11 @@ class _VotingPageState extends State<VotingPage>
             List<VotingCandidate>.from(data.map(
                 (candidateData) => VotingCandidate.fromJson(candidateData)));
 
-        setState(() {
-          votingCandidates = parsedVotingCandidates;
-        });
+        if (mounted) {
+          setState(() {
+            votingCandidates = parsedVotingCandidates;
+          });
+        }
 
         // Print all fetched data
         print('Fetched Voting Candidates:');
@@ -607,39 +611,39 @@ class VotingCandidate {
 
   factory VotingCandidate.fromJson(Map<String, dynamic> json) {
     return VotingCandidate(
-      id: json['id'],
-      compId: json['compId'],
-      memberCode: json['memberCode'],
+      id: json['id'] ?? 0,
+      compId: json['compId'] ?? 0,
+      memberCode: json['memberCode'] ?? '',
       memberId: json['memberId'],
-      panelID: json['panelID'],
-      periodId: json['periodId'],
-      candidateID: json['candidateID'],
+      panelID: json['panelID'] ?? 0,
+      periodId: json['periodId'] ?? 0,
+      candidateID: json['candidateID'] ?? 0,
       organization: json['organization'],
-      description: json['description'],
-      memberName: json['memberName'],
+      description: json['description'] ?? '',
+      memberName: json['memberName'] ?? '',
       fathersName: json['fathersName'],
       mothersName: json['mothersName'],
       spousName: json['spousName'],
-      genderID: json['genderID'],
-      bloodGroupID: json['bloodGroupID'],
-      religionID: json['religionID'],
-      maritialStatusID: json['maritialStatusID'],
+      genderID: json['genderID'] ?? 0,
+      bloodGroupID: json['bloodGroupID'] ?? 0,
+      religionID: json['religionID'] ?? 0,
+      maritialStatusID: json['maritialStatusID'] ?? 0,
       email: json['email'],
-      countryID: json['countryID'],
-      nationalityID: json['nationalityID'],
-      thanaID: json['thanaID'],
-      permanentThanaID: json['permanentThanaID'],
-      unionId: json['unionId'],
-      villageId: json['villageId'],
+      countryID: json['countryID'] ?? 0,
+      nationalityID: json['nationalityID'] ?? 0,
+      thanaID: json['thanaID'] ?? 0,
+      permanentThanaID: json['permanentThanaID'] ?? 0,
+      unionId: json['unionId'] ?? 0,
+      villageId: json['villageId'] ?? 0,
       postOffice: json['postOffice'],
       presentAddress: json['presentAddress'],
       permanentAddress: json['permanentAddress'],
       location: json['location'],
       lastEducation: json['lastEducation'],
       mobileNo: json['mobileNo'],
-      moduleID: json['moduleID'],
-      userID: json['userID'],
-      designationID: json['designationID'],
+      moduleID: json['moduleID'] ?? 0,
+      userID: json['userID'] ?? 0,
+      designationID: json['designationID'] ?? 0,
     );
   }
 }

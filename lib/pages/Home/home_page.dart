@@ -45,9 +45,11 @@ class _HomePageState extends State<HomePage> {
     nameController.text = userName;
 
     _pageController.addListener(() {
-      setState(() {
-        _currentPage = _pageController.page!.toInt();
-      });
+      if (mounted) {
+        setState(() {
+          _currentPage = _pageController.page!.toInt();
+        });
+      }
     });
     loadDataSerially();
   }
@@ -61,9 +63,11 @@ class _HomePageState extends State<HomePage> {
   List<GetNewsorEventModel> newsOrEvents = [];
 
   Future<void> fetchGetNewsorEvent() async {
-    setState(() {
-      _isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       int compId = widget.userDetails?.selectedCompanyData.compId ?? 0;
@@ -82,25 +86,31 @@ class _HomePageState extends State<HomePage> {
         newsOrEvents = jsonResponse
             .map((data) => GetNewsorEventModel.fromJson(data))
             .toList();
-        setState(() {});
+        if (mounted) {
+          setState(() {});
+        }
       } else {
         print('Request failed with status: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching data: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   List<GetWMemberAccountTransactionModel> EventsDetails = [];
 
   Future<void> fetchGetWMemberAccountTransaction() async {
-    setState(() {
-      _isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       int compId = widget.userDetails?.selectedCompanyData.compId ?? 0;
@@ -124,20 +134,24 @@ class _HomePageState extends State<HomePage> {
 
         print('Response Data: $jsonResponse'); // Print the response data
 
-        setState(() {
-          EventsDetails = jsonResponse
-              .map((data) => GetWMemberAccountTransactionModel.fromJson(data))
-              .toList();
-        });
+        if (mounted) {
+          setState(() {
+            EventsDetails = jsonResponse
+                .map((data) => GetWMemberAccountTransactionModel.fromJson(data))
+                .toList();
+          });
+        }
       } else {
         print('Request failed with status: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching data: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -150,9 +164,11 @@ class _HomePageState extends State<HomePage> {
     int index,
   ) async {
     // print(transactionId);
-    setState(() {
-      isLoading[index] = true;
-    });
+    if (mounted) {
+      setState(() {
+        isLoading[index] = true;
+      });
+    }
 
     print("Is loading list : $isLoading");
 
@@ -220,9 +236,11 @@ class _HomePageState extends State<HomePage> {
     } catch (error) {
       print("Exception : $error");
     } finally {
-      setState(() {
-        isLoading[index] = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading[index] = false;
+        });
+      }
     }
   }
 
@@ -517,8 +535,7 @@ class _HomePageState extends State<HomePage> {
                                 await printProduct(
                                     context,
                                     transaction.accountId ?? 0,
-                                    billReceipts[0].transactionId.toString() ??
-                                        '',
+                                    billReceipts[0].transactionId.toString(),
                                     index);
 
                                 // ScaffoldMessenger.of(context).showSnackBar(
@@ -564,5 +581,11 @@ class _HomePageState extends State<HomePage> {
       default:
         return '';
     }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 }
