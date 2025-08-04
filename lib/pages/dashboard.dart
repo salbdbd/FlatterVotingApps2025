@@ -52,14 +52,14 @@ class _DashboardState extends State<Dashboard>
       },
       child: Scaffold(
         backgroundColor: Colors.black,
-        appBar: AppBar(
-          backgroundColor: const Color(0xff15212D),
-          title: Text(
-            _getAppBarTitle(),
-            style: const TextStyle(color: Colors.white),
-          ),
-          leading: _buildLeadingIcon(),
-        ),
+        // appBar: AppBar(
+        //   backgroundColor: const Color(0xff15212D),
+        //   title: Text(
+        //     _getAppBarTitle(),
+        //     style: const TextStyle(color: Colors.white),
+        //   ),
+        //   leading: _buildLeadingIcon(),
+        // ),
         body: GestureDetector(
           onHorizontalDragEnd: (details) {
             if (details.primaryVelocity! > 0 && indexSelected > 0) {

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:association/pages/indexing_page/indexing_page.dart';
 import 'package:association/pages/profile_page/change_password/change_password.dart';
 import 'package:http/http.dart' as http;
@@ -23,9 +24,13 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage>
+    with TickerProviderStateMixin {
   bool isContainerVisible = false;
   bool isLoading = true;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   TextEditingController memberCodeController = TextEditingController();
   TextEditingController userNameController = TextEditingController();
@@ -34,27 +39,47 @@ class _ProfilePageState extends State<ProfilePage> {
   TextEditingController presentAddressController = TextEditingController();
   TextEditingController mobileNoController = TextEditingController();
   TextEditingController emailController = TextEditingController();
+  String? imageUrl;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.5),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.elasticOut,
+    ));
+
     fetchGetMemberUserById();
+    log(
+        name: 'Member ID',
+        widget.userDetails?.userData.memberId.toString() ?? 'No User');
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> fetchGetMemberUserById() async {
     final compId = widget.userDetails?.selectedCompanyData.compId ?? 0;
     final userName = widget.userDetails?.userData.userName ?? 0;
-    // final mobileNo = widget.userDetails?.userData.mobileNo?? 0;
-
-    /*// get data by member id if user name is member id
-    final memberId= widget.userDetails?.selectedCompanyData.memberId??0;*/
-
-    // debugPrint("\n\n Member Id : ${memberId}\n\n");
 
     final url = Uri.parse(
         '${BaseUrl.baseUrl}/api/v1/GetMemberUserById/$compId/$userName');
 
     try {
+      log(name: 'GetMemberUserById', url.toString());
       final response = await http.get(
         url,
         headers: {
@@ -65,8 +90,6 @@ class _ProfilePageState extends State<ProfilePage> {
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
 
-        // debugPrint("\n\nRay json data : $jsonData\n\n");
-
         setState(() {
           memberCodeController.text = jsonData['memberCode'] ?? '';
           userNameController.text = jsonData['memberName'] ?? '';
@@ -75,8 +98,10 @@ class _ProfilePageState extends State<ProfilePage> {
           presentAddressController.text = jsonData['presentAddress'] ?? '';
           mobileNoController.text = jsonData['mobileNo'] ?? '';
           emailController.text = jsonData['email'] ?? '';
+          imageUrl = jsonData['imageBase64'] ?? '';
           isLoading = false;
         });
+        _animationController.forward();
       } else {
         print('Request failed with status: ${response.statusCode}');
         setState(() => isLoading = false);
@@ -90,254 +115,607 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF0A0A0B),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
+          ? Center(
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Center(
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.orange.withValues(alpha: 0.3),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: const CircularProgressIndicator(
+                      color: Colors.orange,
+                      strokeWidth: 3,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Loading your profile...',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF0A0A0B),
+                    Color(0xFF1A1A1F),
+                    Color(0xFF0F0F14),
+                  ],
+                ),
+              ),
+              child: SafeArea(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20.0, vertical: 24),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Container(
-                            width: 120,
-                            height: 120,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white,
-                            ),
-                            child: Center(
-                              child: ClipOval(
-                                child: Image.asset(
-                                  'assets/Images/TigerHRMSwhite.png',
-                                  width: 100,
-                                  height: 100,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 20),
-                          Container(
-                            width: 200,
-                            child: Text(
-                              widget.userDetails?.userData.companyName ?? '',
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
+                          // Enhanced Profile Header
+                          _buildProfileHeader(),
+                          const SizedBox(height: 32),
+
+                          // Profile Details Section
+                          _buildProfileDetailsSection(),
+                          const SizedBox(height: 32),
+
+                          // Action Buttons
+                          _buildActionButtons(),
                         ],
                       ),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        isContainerVisible = !isContainerVisible;
-                      });
-                    },
-                    child: Container(
-                      height: 50,
-                      margin: EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        border: Border.all(width: 2, color: Colors.white),
-                        borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildProfileHeader() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.orange.withOpacity(0.1),
+            Colors.deepOrange.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.orange.withOpacity(0.3),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withOpacity(0.1),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Profile Avatar with glow effect
+          Container(
+            // width: 140,
+            // height: 140,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [Colors.orange, Colors.deepOrange],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.orange.withOpacity(0.4),
+                  blurRadius: 25,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: Container(
+              margin: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+              child: ClipOval(
+                child: imageUrl != null
+                    ? Image.memory(
+                        base64Decode(imageUrl!),
+                        fit: BoxFit.contain,
+                        width: 100, // Reduced width
+                        height: 100, // Reduced height
+                      )
+                    : const Icon(
+                        Icons.person,
+                        size: 60, // Reduced icon size
+                        color: Colors.grey,
                       ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'See Your Profile',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                            ),
-                          ),
-                          Icon(
-                            isContainerVisible
-                                ? Icons.keyboard_arrow_up_rounded
-                                : Icons.keyboard_arrow_down_rounded,
-                            color: Colors.white,
-                            size: 40,
-                          ),
-                        ],
-                      ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Company Name with enhanced styling
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.orange.withOpacity(0.3),
+              ),
+            ),
+            child: Text(
+              widget.userDetails?.userData.companyName ?? 'Company Name',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // User role/status indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.green.withOpacity(0.5)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Active Member',
+                  style: TextStyle(
+                    color: Colors.green,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileDetailsSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.02),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header for profile details
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                isContainerVisible = !isContainerVisible;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.orange.withOpacity(0.1),
+                    Colors.deepOrange.withOpacity(0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.person_outline,
+                      color: Colors.orange,
+                      size: 24,
                     ),
                   ),
-                  AnimatedContainer(
-                    duration: Duration(milliseconds: 700),
-                    curve: Curves.easeInOut,
-                    height: isContainerVisible ? null : 0,
-                    margin: EdgeInsets.symmetric(horizontal: 10),
+                  const SizedBox(width: 16),
+                  Expanded(
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CustomTextFieldsforProfile(
-                          controller: memberCodeController,
-                          labelText: 'Member Code',
-                          hintText: 'Member Code',
-                          disableOrEnable: false,
-                          borderColor: 0xFFBCC2C2,
-                          filled: false,
-                          prefixIcon: Icons.code,
+                        const Text(
+                          'Profile Details',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        CustomTextFieldsforProfile(
-                          controller: userNameController,
-                          labelText: 'Name',
-                          hintText: 'Name',
-                          disableOrEnable: false,
-                          borderColor: 0xFFBCC2C2,
-                          filled: false,
-                          prefixIcon: Icons.account_circle,
-                        ),
-                        CustomTextFieldsforProfile(
-                          controller: fatherNameController,
-                          labelText: 'Father Name',
-                          hintText: 'Father Name',
-                          disableOrEnable: false,
-                          borderColor: 0xFFBCC2C2,
-                          filled: false,
-                          prefixIcon: Icons.family_restroom,
-                        ),
-                        CustomTextFieldsforProfile(
-                          controller: motherNameController,
-                          labelText: 'Mother Name',
-                          hintText: 'Mother Name',
-                          disableOrEnable: false,
-                          borderColor: 0xFFBCC2C2,
-                          filled: false,
-                          prefixIcon: Icons.family_restroom,
-                        ),
-                        CustomTextFieldsforProfile(
-                          controller: mobileNoController,
-                          labelText: 'Mobile No',
-                          hintText: 'Mobile No',
-                          disableOrEnable: false,
-                          borderColor: 0xFFBCC2C2,
-                          filled: false,
-                          prefixIcon: Icons.phone_iphone,
-                        ),
-                        CustomTextFieldsforProfile(
-                          controller: emailController,
-                          labelText: 'Email',
-                          hintText: 'Email',
-                          disableOrEnable: false,
-                          borderColor: 0xFFBCC2C2,
-                          filled: false,
-                          prefixIcon: Icons.email_outlined,
-                        ),
-                        CustomTextFieldsforProfile(
-                          controller: presentAddressController,
-                          labelText: 'Present Address',
-                          hintText: 'Present Address',
-                          disableOrEnable: false,
-                          borderColor: 0xFFBCC2C2,
-                          filled: false,
-                          prefixIcon: Icons.other_houses,
+                        const SizedBox(height: 4),
+                        Text(
+                          isContainerVisible
+                              ? 'Tap to hide'
+                              : 'Tap to view your information',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 14,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: GestureDetector(
-                      onTap: _logout,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Color(0xff15212D),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: ListTile(
-                                title: const Text(
-                                  'LogOut',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white),
-                                ),
-                                subtitle: const Text(
-                                  'LogOut your Company',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white),
-                                ),
-                                leading: Icon(
-                                  Icons.logout,
-                                  color: Colors.white,
-                                  size: 50,
-                                ),
-                                trailing: Icon(Icons.arrow_forward_ios,
-                                    size: 40, color: Colors.orange),
-                              ),
-                            ),
-                          ],
-                        ),
+                  AnimatedRotation(
+                    turns: isContainerVisible ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 300),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => ChangePasswordPage()));
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Color(0xff15212D),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: ListTile(
-                                title: const Text(
-                                  'Chnage Password',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white),
-                                ),
-                                leading: Icon(
-                                  Icons.change_circle,
-                                  color: Colors.white,
-                                  size: 50,
-                                ),
-                                trailing: Icon(Icons.arrow_forward_ios,
-                                    size: 40, color: Colors.orange),
-                              ),
-                            ),
-                          ],
-                        ),
+                      child: Icon(
+                        Icons.keyboard_arrow_down,
+                        color: Colors.orange,
+                        size: 24,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
+          ),
+
+          // Animated profile fields
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+            height: isContainerVisible ? null : 0,
+            child: isContainerVisible
+                ? Container(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        _buildEnhancedProfileField(
+                          memberCodeController,
+                          'Member Code',
+                          Icons.badge_outlined,
+                          Colors.blue,
+                        ),
+                        _buildEnhancedProfileField(
+                          userNameController,
+                          'Full Name',
+                          Icons.person,
+                          Colors.green,
+                        ),
+                        _buildEnhancedProfileField(
+                          fatherNameController,
+                          'Father\'s Name',
+                          Icons.man,
+                          Colors.purple,
+                        ),
+                        _buildEnhancedProfileField(
+                          motherNameController,
+                          'Mother\'s Name',
+                          Icons.woman,
+                          Colors.pink,
+                        ),
+                        _buildEnhancedProfileField(
+                          mobileNoController,
+                          'Mobile Number',
+                          Icons.phone,
+                          Colors.orange,
+                        ),
+                        _buildEnhancedProfileField(
+                          emailController,
+                          'Email Address',
+                          Icons.email,
+                          Colors.cyan,
+                        ),
+                        _buildEnhancedProfileField(
+                          presentAddressController,
+                          'Present Address',
+                          Icons.location_on,
+                          Colors.red,
+                        ),
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnhancedProfileField(
+    TextEditingController controller,
+    String label,
+    IconData icon,
+    Color accentColor,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        readOnly: true,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(
+            color: Colors.white.withOpacity(0.8),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+          prefixIcon: Container(
+            margin: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: accentColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: accentColor,
+              size: 20,
+            ),
+          ),
+          filled: true,
+          fillColor: Colors.transparent,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Column(
+      children: [
+        _buildEnhancedActionTile(
+          title: 'Change Password',
+          subtitle: 'Update your account security',
+          icon: Icons.lock_reset,
+          gradientColors: [Colors.blue, Colors.indigo],
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ChangePasswordPage(),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildEnhancedActionTile(
+          title: 'Logout',
+          subtitle: 'Sign out from your account',
+          icon: Icons.logout,
+          gradientColors: [Colors.red, Colors.deepOrange],
+          onTap: _logout,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEnhancedActionTile({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required List<Color> gradientColors,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              gradientColors[0].withOpacity(0.1),
+              gradientColors[1].withOpacity(0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: gradientColors[0].withOpacity(0.3),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: gradientColors[0].withOpacity(0.2),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: gradientColors,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: gradientColors[0].withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Icon(
+                icon,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: gradientColors[0].withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.arrow_forward_ios,
+                color: gradientColors[0],
+                size: 20,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Future<void> _logout() async {
-    await Hive.close();
-    await Hive.deleteBoxFromDisk('loginData');
+    // Show confirmation dialog
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: const Text(
+          'Confirm Logout',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Are you sure you want to logout?',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.orange)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text('Logout', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    if (shouldLogout == true) {
+      await Hive.close();
+      await Hive.deleteBoxFromDisk('loginData');
 
-    Get.offAll(() => LoginPage());
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      Get.offAll(() => LoginPage());
+    }
   }
 }

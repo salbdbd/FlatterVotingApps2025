@@ -1,5 +1,6 @@
 import 'package:association/pages/Home/pdf_viewer_screen.dart';
 import 'package:association/pages/dashboard.dart';
+import 'package:association/pages/dashboard/dashboard_page.dart';
 import 'package:association/pages/voting_page/voting_page.dart';
 import 'package:association/splash_screen.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +26,9 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SplashScreen(),
+      home:
+          // DashBoard()
+          SplashScreen(),
     );
   }
 }
