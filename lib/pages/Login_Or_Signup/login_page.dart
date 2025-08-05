@@ -40,19 +40,6 @@ class _LoginPageState extends State<LoginPage> {
     if (isConnected) {
       signIn();
     }
-    // else if(!isConnected){
-    //       //cMethods.displaySnackBarRed("Your Internet is not available. Check your connection and try again.", context);
-    //
-    // }
-    // cMethods.checkConnectivity(context).then((isConnected) {
-    //   if (isConnected) {
-    //     signIn();
-    //   }
-    //   else {
-    //   //  signIn();
-    //     cMethods.displaySnackBarRed("Your Internet is not available. Check your connection and try again.", context);
-    //   }
-    // });
   }
 
   Future<void> signIn() async {
@@ -183,7 +170,6 @@ class _LoginPageState extends State<LoginPage> {
                     //   fit: BoxFit.cover,
                     // ),
                     // ),
-
                     const Text(
                       "Sign In",
                       style: TextStyle(
@@ -363,10 +349,12 @@ class _LoginPageState extends State<LoginPage> {
     userCredentialsList = [];
 
     // Check if savedCredentialsListString is not null before decoding
-    if (savedCredentialsListString != null && savedCredentialsListString.isNotEmpty) {
+    if (savedCredentialsListString != null &&
+        savedCredentialsListString.isNotEmpty) {
       try {
         // Convert the saved string back to a list of maps
-        List<dynamic> savedCredentialsList = json.decode(savedCredentialsListString);
+        List<dynamic> savedCredentialsList =
+            json.decode(savedCredentialsListString);
 
         // Iterate through the list and add each credential to userCredentialsList
         for (var item in savedCredentialsList) {

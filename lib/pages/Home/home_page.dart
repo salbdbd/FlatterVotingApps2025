@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:association/models/loger_item_model.dart';
 import 'package:association/pages/Home/components/event_card.dart';
 import 'package:association/pages/Home/components/loan_pdf/pdf_page.dart';
 import 'package:association/pages/Home/model/get_billreceipt_model.dart';
@@ -12,12 +13,58 @@ import 'package:dots_indicator/dots_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:get/get.dart';
 
 import '../../services/api_service.dart';
 import '../indexing_page/indexing_page.dart';
 import 'components/CountDownAnimation.dart';
 import 'components/booking_page.dart';
 import 'model/get_newsor_event_model.dart';
+
+// Add the LedgerController
+class LedgerController extends GetxController {
+  var isLoading = true.obs;
+  var ledgerList = <PersonalLedgerModel>[].obs;
+  var runningBalance = 0.0.obs;
+
+  Future<void> fetchLedger(String comCode, String mobile) async {
+    try {
+      isLoading(true);
+      final url =
+          'http://103.125.253.59:2004/api/v1/get_MemberPersonalLedger/$comCode/$mobile';
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        List jsonData = jsonDecode(response.body);
+        ledgerList.value =
+            jsonData.map((e) => PersonalLedgerModel.fromJson(e)).toList();
+        calculateRunningBalance();
+      } else {
+        ledgerList.value = [];
+        Get.snackbar('Error', 'Failed to load ledger data');
+      }
+    } catch (e) {
+      Get.snackbar('Error', e.toString());
+      ledgerList.value = [];
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  void calculateRunningBalance() {
+    double balance = 0.0;
+    for (var item in ledgerList) {
+      balance += item.drAmount - item.crAmount;
+    }
+    runningBalance.value = balance;
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchLedger('202', '01757389204');
+  }
+}
 
 class HomePage extends StatefulWidget {
   final UserDetails? userDetails;
@@ -42,6 +89,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late Animation<Offset> _slideAnimation;
   late TabController _tabController;
 
+  // Add LedgerController instance
+  final LedgerController ledgerController = Get.put(LedgerController());
+
   @override
   void initState() {
     super.initState();
@@ -49,8 +99,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     String userName = widget.userDetails?.selectedCompanyData.name ?? '';
     nameController.text = userName;
 
-    // Initialize tab controller
-    _tabController = TabController(length: 3, vsync: this);
+    // Updated tab controller to have 4 tabs instead of 3
+    _tabController = TabController(length: 4, vsync: this);
 
     // Initialize animations
     _fadeAnimationController = AnimationController(
@@ -438,7 +488,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     (BuildContext context, bool innerBoxIsScrolled) {
                   return <Widget>[
                     SliverAppBar(
-                      expandedHeight: 80.0, // Reduced from 120.0
+                      expandedHeight: 80.0,
                       floating: true,
                       pinned: false,
                       backgroundColor: Colors.transparent,
@@ -454,26 +504,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ),
                           child: SafeArea(
                             child: Padding(
-                              padding: EdgeInsets.all(16), // Reduced from 20
+                              padding: EdgeInsets.all(16),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
                                     children: [
                                       Container(
-                                        // Reduced from 50
                                         decoration: BoxDecoration(
                                           color: Colors.white.withOpacity(0.2),
-                                          borderRadius: BorderRadius.circular(
-                                              20), // Reduced from 25
+                                          borderRadius:
+                                              BorderRadius.circular(20),
                                         ),
                                         child: Icon(
                                           Icons.account_circle,
                                           color: Colors.white,
-                                          size: 24, // Reduced from 30
+                                          size: 24,
                                         ),
                                       ),
-                                      SizedBox(width: 10), // Reduced from 12
+                                      SizedBox(width: 10),
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment:
@@ -483,7 +532,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                               'Welcome back,',
                                               style: TextStyle(
                                                 color: Colors.white70,
-                                                fontSize: 12, // Reduced from 14
+                                                fontSize: 12,
                                               ),
                                             ),
                                             Text(
@@ -492,7 +541,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                   : 'Member',
                                               style: TextStyle(
                                                 color: Colors.white,
-                                                fontSize: 16, // Reduced from 18
+                                                fontSize: 16,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
@@ -502,7 +551,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       Icon(
                                         Icons.notifications_outlined,
                                         color: Colors.white,
-                                        size: 22, // Reduced from 26
+                                        size: 22,
                                       ),
                                     ],
                                   ),
@@ -519,12 +568,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            SizedBox(height: 12), // Reduced from 20
+                            SizedBox(height: 12),
                             // News Headlines
                             Container(
-                              margin: EdgeInsets.symmetric(
-                                  horizontal: 16), // Reduced from 20
-                              padding: EdgeInsets.all(12), // Reduced from 16
+                              margin: EdgeInsets.symmetric(horizontal: 16),
+                              padding: EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
@@ -534,22 +582,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
-                                borderRadius: BorderRadius.circular(
-                                    12), // Reduced from 16
+                                borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withOpacity(0.3),
-                                    blurRadius: 8, // Reduced from 10
-                                    offset: Offset(
-                                        0, 4), // Reduced from Offset(0, 5)
+                                    blurRadius: 8,
+                                    offset: Offset(0, 4),
                                   ),
                                 ],
                               ),
                               child: Row(
                                 children: [
                                   Container(
-                                    width: 3, // Reduced from 4
-                                    height: 32, // Reduced from 40
+                                    width: 3,
+                                    height: 32,
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         colors: [
@@ -560,7 +606,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                   ),
-                                  SizedBox(width: 10), // Reduced from 12
+                                  SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
                                       newsOrEvents.isNotEmpty
@@ -570,7 +616,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                           : 'Stay tuned for updates',
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: 14, // Reduced from 16
+                                        fontSize: 14,
                                         fontWeight: FontWeight.w600,
                                         height: 1.3,
                                       ),
@@ -579,41 +625,36 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   Icon(
                                     Icons.trending_up,
                                     color: Color(0xFF6C5CE7),
-                                    size: 20, // Reduced from 24
+                                    size: 20,
                                   ),
                                 ],
                               ),
                             ),
-                            SizedBox(height: 12), // Reduced from 20
-                            // Image Carousel
+                            SizedBox(height: 12),
+                            // Image Carousel (keeping your existing carousel code)
                             Container(
-                              height: 180, // Reduced from 250
+                              height: 180,
                               child: Stack(
                                 children: [
                                   Container(
-                                    margin: EdgeInsets.symmetric(
-                                        horizontal: 16), // Reduced from 20
+                                    margin:
+                                        EdgeInsets.symmetric(horizontal: 16),
                                     decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(
-                                          16), // Reduced from 20
+                                      borderRadius: BorderRadius.circular(16),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(
-                                              0.3), // Reduced opacity from 0.4
-                                          blurRadius: 10, // Reduced from 15
-                                          offset: Offset(0,
-                                              6), // Reduced from Offset(0, 8)
+                                          color: Colors.black.withOpacity(0.3),
+                                          blurRadius: 10,
+                                          offset: Offset(0, 6),
                                         ),
                                       ],
                                     ),
                                     child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(
-                                          16), // Reduced from 20
+                                      borderRadius: BorderRadius.circular(16),
                                       child: newsOrEvents.isNotEmpty
                                           ? CarouselSlider(
                                               options: CarouselOptions(
-                                                height:
-                                                    180.0, // Reduced from 250.0
+                                                height: 180.0,
                                                 enlargeCenterPage: true,
                                                 autoPlay: true,
                                                 aspectRatio: 16 / 9,
@@ -640,7 +681,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                   decoration: BoxDecoration(
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                            16), // Reduced from 20
+                                                            16),
                                                     gradient: LinearGradient(
                                                       colors: [
                                                         Colors.transparent,
@@ -672,16 +713,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                   ],
                                                 ),
                                                 borderRadius:
-                                                    BorderRadius.circular(
-                                                        16), // Reduced from 20
+                                                    BorderRadius.circular(16),
                                               ),
                                               child: Center(
                                                 child: Text(
                                                   'No images available',
                                                   style: TextStyle(
                                                     color: Colors.white60,
-                                                    fontSize:
-                                                        14, // Reduced from 16
+                                                    fontSize: 14,
                                                   ),
                                                 ),
                                               ),
@@ -690,7 +729,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   ),
                                   if (newsOrEvents.isNotEmpty)
                                     Positioned(
-                                      bottom: 10, // Reduced from 15
+                                      bottom: 10,
                                       left: 0,
                                       right: 0,
                                       child: DotsIndicator(
@@ -699,32 +738,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                         decorator: DotsDecorator(
                                           color: Colors.white.withOpacity(0.5),
                                           activeColor: Color(0xFF6C5CE7),
-                                          size: Size.square(
-                                              6.0), // Reduced from 8.0
-                                          activeSize: Size(20.0,
-                                              6.0), // Reduced from Size(24.0, 8.0)
+                                          size: Size.square(6.0),
+                                          activeSize: Size(20.0, 6.0),
                                           activeShape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                                3), // Reduced from 4
+                                            borderRadius:
+                                                BorderRadius.circular(3),
                                           ),
                                           spacing: EdgeInsets.symmetric(
-                                              horizontal:
-                                                  3.0), // Reduced from 4.0
+                                              horizontal: 3.0),
                                         ),
                                       ),
                                     ),
                                 ],
                               ),
                             ),
-                            SizedBox(height: 16), // Reduced from 30
+                            SizedBox(height: 16),
                             // Number Animation Section
                             Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 16), // Reduced from 20
+                              padding: EdgeInsets.symmetric(horizontal: 16),
                               child: NumberAnimation(
                                   userDetails: widget.userDetails),
                             ),
-                            SizedBox(height: 16), // Reduced from 30
+                            SizedBox(height: 16),
                           ],
                         ),
                       ),
@@ -735,32 +770,34 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         TabBar(
                           controller: _tabController,
                           indicatorColor: Color(0xFF6C5CE7),
-                          indicatorWeight: 2, // Reduced from 3
+                          indicatorWeight: 2,
                           indicatorSize: TabBarIndicatorSize.label,
                           labelColor: Colors.white,
                           unselectedLabelColor: Colors.white60,
                           labelStyle: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 14, // Reduced from 16
+                            fontSize: 12, // Reduced font size to fit 4 tabs
                           ),
                           unselectedLabelStyle: TextStyle(
                             fontWeight: FontWeight.normal,
-                            fontSize: 12, // Reduced from 14
+                            fontSize: 10, // Reduced font size to fit 4 tabs
                           ),
                           tabs: [
                             Tab(
-                              icon: Icon(Icons.event,
-                                  size: 18), // Reduced from 20
-                              text: 'Events & Payments',
+                              icon: Icon(Icons.event, size: 16),
+                              text: 'Events',
                             ),
                             Tab(
-                              icon: Icon(Icons.contacts,
-                                  size: 18), // Reduced from 20
+                              icon:
+                                  Icon(Icons.account_balance_wallet, size: 16),
+                              text: 'Accounts',
+                            ),
+                            Tab(
+                              icon: Icon(Icons.contacts, size: 16),
                               text: 'Contacts',
                             ),
                             Tab(
-                              icon: Icon(Icons.notifications,
-                                  size: 18), // Reduced from 20
+                              icon: Icon(Icons.notifications, size: 16),
                               text: 'Alerts',
                             ),
                           ],
@@ -772,11 +809,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 body: TabBarView(
                   controller: _tabController,
                   children: [
-                    // Events & Payments Tab
+                    // Events & Payments Tab (keeping your existing code)
                     _buildEventsTab(containerHeight),
-                    // Contacts Tab
+                    // NEW Accounts Tab
+                    _buildAccountsTab(),
+                    // Contacts Tab (keeping your existing code)
                     _buildContactsTab(),
-                    // Alerts Tab
+                    // Alerts Tab (keeping your existing code)
                     _buildAlertsTab(),
                   ],
                 ),
@@ -785,10 +824,523 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
+  // NEW Accounts Tab Implementation
+  Widget _buildAccountsTab() {
+    return Obx(() {
+      if (ledgerController.isLoading.value) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
+                  ),
+                ),
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  strokeWidth: 3,
+                ),
+              ),
+              SizedBox(height: 20),
+              Text(
+                'Loading account data...',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      if (ledgerController.ledgerList.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(40),
+                ),
+                child: Icon(
+                  Icons.account_balance_wallet_outlined,
+                  size: 40,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(height: 20),
+              Text(
+                'No account data available',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.white60,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Account records will appear here',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return Column(
+        children: [
+          // Compact Summary Card
+          Container(
+            margin: EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF2D3748).withOpacity(0.8),
+                  Color(0xFF1A202C).withOpacity(0.9),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Color(0xFF6C5CE7).withOpacity(0.3),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF6C5CE7).withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Icon(
+                          Icons.receipt_long,
+                          color: Color(0xFF6C5CE7),
+                          size: 16,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Records',
+                            style: TextStyle(
+                              color: Colors.white60,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            '${ledgerController.ledgerList.length}',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 35,
+                  color: Colors.white.withOpacity(0.2),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: ledgerController.runningBalance.value >= 0
+                              ? Color(0xFF00D2FF).withOpacity(0.2)
+                              : Color(0xFFFF6B6B).withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Icon(
+                          ledgerController.runningBalance.value >= 0
+                              ? Icons.trending_up
+                              : Icons.trending_down,
+                          color: ledgerController.runningBalance.value >= 0
+                              ? Color(0xFF00D2FF)
+                              : Color(0xFFFF6B6B),
+                          size: 16,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Balance',
+                              style: TextStyle(
+                                color: Colors.white60,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Obx(() => Text(
+                                  '৳${ledgerController.runningBalance.value.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    color:
+                                        ledgerController.runningBalance.value >=
+                                                0
+                                            ? Color(0xFF00D2FF)
+                                            : Color(0xFFFF6B6B),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                )),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Responsive Horizontal Scrollable Table
+          Expanded(
+            child: Container(
+              margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF2D3748).withOpacity(0.6),
+                    Color(0xFF1A202C).withOpacity(0.8),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Color(0xFF6C5CE7).withOpacity(0.2),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Responsive column widths based on screen width
+                  double screenWidth = constraints.maxWidth;
+                  bool isSmallScreen = screenWidth < 400;
+                  bool isMediumScreen = screenWidth >= 400 && screenWidth < 600;
+
+                  // Adjust column widths responsively
+                  double transIdWidth = isSmallScreen ? 80 : 90;
+                  double dateWidth = isSmallScreen ? 75 : 85;
+                  double voucherWidth = isSmallScreen ? 90 : 100;
+                  double accountWidth =
+                      isSmallScreen ? 140 : (isMediumScreen ? 160 : 180);
+                  double billAmtWidth = isSmallScreen ? 100 : 110;
+                  double paidAmtWidth = isSmallScreen ? 100 : 110;
+                  double balanceWidth = isSmallScreen ? 90 : 100;
+
+                  double totalTableWidth = transIdWidth +
+                      dateWidth +
+                      voucherWidth +
+                      accountWidth +
+                      billAmtWidth +
+                      paidAmtWidth +
+                      balanceWidth +
+                      46; // 46 for spacing (12+4+4+4+4+4+2+4+12)
+
+                  // Create a single scroll controller for both header and data
+                  ScrollController _horizontalScrollController =
+                      ScrollController();
+
+                  return Column(
+                    children: [
+                      // Responsive Table Header with synchronized scrolling
+                      Container(
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
+                          ),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(12),
+                            topRight: Radius.circular(12),
+                          ),
+                        ),
+                        child: SingleChildScrollView(
+                          controller: _horizontalScrollController,
+                          scrollDirection: Axis.horizontal,
+                          child: Container(
+                            width: totalTableWidth,
+                            child: Row(
+                              children: [
+                                SizedBox(width: 12),
+                                _buildHeaderCell(
+                                    'Trans ID', transIdWidth, isSmallScreen),
+                                SizedBox(width: 4),
+                                _buildHeaderCell(
+                                    'Date', dateWidth, isSmallScreen),
+                                SizedBox(width: 4),
+                                _buildHeaderCell(
+                                    'Voucher', voucherWidth, isSmallScreen),
+                                SizedBox(width: 4),
+                                _buildHeaderCell('Account Head', accountWidth,
+                                    isSmallScreen),
+                                SizedBox(width: 4),
+                                _buildHeaderCell(
+                                    'Bill Amt', billAmtWidth, isSmallScreen),
+                                SizedBox(width: 2),
+                                _buildHeaderCell(
+                                    'Paid Amt', paidAmtWidth, isSmallScreen),
+                                SizedBox(width: 4),
+                                _buildHeaderCell(
+                                    'Balance', balanceWidth, isSmallScreen),
+                                SizedBox(width: 12),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Responsive Table Data with synchronized horizontal scroll
+                      Expanded(
+                        child: Scrollbar(
+                          thumbVisibility: true,
+                          thickness: 3,
+                          radius: Radius.circular(2),
+                          child: SingleChildScrollView(
+                            controller: _horizontalScrollController,
+                            scrollDirection: Axis.horizontal,
+                            child: Container(
+                              width: totalTableWidth,
+                              child: ListView.builder(
+                                padding: EdgeInsets.only(bottom: 100),
+                                itemCount: ledgerController.ledgerList.length,
+                                itemBuilder: (context, index) {
+                                  final item =
+                                      ledgerController.ledgerList[index];
+                                  double balance =
+                                      item.drAmount - item.crAmount;
+
+                                  return Container(
+                                    decoration: BoxDecoration(
+                                      color: index % 2 == 0
+                                          ? Colors.transparent
+                                          : Colors.white.withOpacity(0.03),
+                                      border: Border(
+                                        bottom: BorderSide(
+                                          color: Colors.white.withOpacity(0.1),
+                                          width: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        SizedBox(width: 12),
+                                        // Trans ID
+                                        _buildDataCell(
+                                          item.transId.toString() ?? 'N/A',
+                                          transIdWidth,
+                                          Colors.white,
+                                          FontWeight.w600,
+                                          TextAlign.left,
+                                          isSmallScreen,
+                                        ),
+                                        SizedBox(width: 4),
+                                        // Date
+                                        _buildDataCell(
+                                          _formatDate(item.vdate),
+                                          dateWidth,
+                                          Colors.white70,
+                                          FontWeight.normal,
+                                          TextAlign.left,
+                                          isSmallScreen,
+                                        ),
+                                        SizedBox(width: 4),
+                                        // Voucher No
+                                        _buildDataCell(
+                                          item.vno,
+                                          voucherWidth,
+                                          Colors.white70,
+                                          FontWeight.normal,
+                                          TextAlign.left,
+                                          isSmallScreen,
+                                        ),
+                                        SizedBox(width: 4),
+                                        // Account Head
+                                        _buildDataCell(
+                                          item.accountName.isNotEmpty
+                                              ? item.accountName
+                                              : (item.aliasName.isNotEmpty
+                                                  ? item.aliasName
+                                                  : 'N/A'),
+                                          accountWidth,
+                                          Colors.white,
+                                          FontWeight.w500,
+                                          TextAlign.left,
+                                          isSmallScreen,
+                                        ),
+                                        SizedBox(width: 4),
+                                        // Bill Amount (Dr Amount)
+                                        _buildDataCell(
+                                          '৳${item.drAmount.toStringAsFixed(0)}',
+                                          billAmtWidth,
+                                          item.drAmount > 0
+                                              ? Color(0xFFFF6B6B)
+                                              : Colors.white60,
+                                          item.drAmount > 0
+                                              ? FontWeight.w600
+                                              : FontWeight.normal,
+                                          TextAlign.right,
+                                          isSmallScreen,
+                                        ),
+                                        SizedBox(width: 2),
+                                        // Paid Amount (Cr Amount)
+                                        _buildDataCell(
+                                          '৳${item.crAmount.toStringAsFixed(0)}',
+                                          paidAmtWidth,
+                                          item.crAmount > 0
+                                              ? Color(0xFF00D2FF)
+                                              : Colors.white60,
+                                          item.crAmount > 0
+                                              ? FontWeight.w600
+                                              : FontWeight.normal,
+                                          TextAlign.right,
+                                          isSmallScreen,
+                                        ),
+                                        SizedBox(width: 4),
+                                        // Balance
+                                        _buildDataCell(
+                                          '৳${balance.toStringAsFixed(0)}',
+                                          balanceWidth,
+                                          balance >= 0
+                                              ? Color(0xFF00D2FF)
+                                              : Color(0xFFFF6B6B),
+                                          FontWeight.bold,
+                                          TextAlign.right,
+                                          isSmallScreen,
+                                        ),
+                                        SizedBox(width: 12),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+// Helper method for responsive table header cells
+  Widget _buildHeaderCell(String text, double width, bool isSmallScreen) {
+    return Container(
+      width: width,
+      padding: EdgeInsets.symmetric(horizontal: 4),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: isSmallScreen ? 11 : 12,
+          color: Colors.white,
+          letterSpacing: 0.3,
+        ),
+        textAlign: TextAlign.left,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+// Helper method for responsive table data cells
+  Widget _buildDataCell(
+    String text,
+    double width,
+    Color color,
+    FontWeight fontWeight,
+    TextAlign textAlign,
+    bool isSmallScreen,
+  ) {
+    return Container(
+      width: width,
+      padding: EdgeInsets.symmetric(
+          horizontal: 4, vertical: isSmallScreen ? 10 : 12),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: isSmallScreen ? 10 : 11,
+          color: color,
+          fontWeight: fontWeight,
+        ),
+        textAlign: textAlign,
+        overflow: TextOverflow.ellipsis,
+        maxLines: isSmallScreen ? 1 : 2,
+      ),
+    );
+  }
+
+  // Helper method to format date strings
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return 'N/A';
+    try {
+      final date = DateTime.parse(dateStr);
+      // Format as dd-MM-yyyy or any format you prefer
+      return "${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}";
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
+  // Keep all your existing methods
   Widget _buildEventsTab(double containerHeight) {
     return ListView.builder(
-      padding:
-          EdgeInsets.only(top: 16, bottom: 100), // Reduced top padding from 20
+      padding: EdgeInsets.only(top: 16, bottom: 100),
       physics: BouncingScrollPhysics(),
       itemCount: EventsDetails.length,
       itemBuilder: (BuildContext context, int index) {
@@ -821,9 +1373,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
             ),
             child: Padding(
-              padding: EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 6), // Reduced horizontal from 20, vertical from 8
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Container(
                 height: containerHeight,
                 decoration: BoxDecoration(
@@ -835,17 +1385,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(16), // Reduced from 20
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: Color(0xFF6C5CE7).withOpacity(0.2),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black
-                          .withOpacity(0.25), // Reduced opacity from 0.3
-                      blurRadius: 12, // Reduced from 15
-                      offset: Offset(0, 6), // Reduced from Offset(0, 8)
+                      color: Colors.black.withOpacity(0.25),
+                      blurRadius: 12,
+                      offset: Offset(0, 6),
                     ),
                   ],
                 ),
@@ -913,183 +1462,290 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildContactsTab() {
-    return ListView.builder(
-      padding:
-          EdgeInsets.only(top: 16, bottom: 100), // Reduced top padding from 20
-      physics: BouncingScrollPhysics(),
-      itemCount: contacts.length,
-      itemBuilder: (context, index) {
-        final contact = contacts[index];
-        return Padding(
-          padding: EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 6), // Reduced horizontal from 20, vertical from 8
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFF2D3748).withOpacity(0.6),
-                  Color(0xFF1A202C).withOpacity(0.8),
+    return Scrollbar(
+      thumbVisibility: true,
+      thickness: 4,
+      radius: Radius.circular(2),
+      child: ListView.builder(
+        padding:
+            EdgeInsets.fromLTRB(16, 16, 16, 120), // Added more bottom padding
+        physics: BouncingScrollPhysics(),
+        itemCount: contacts.length,
+        itemBuilder: (context, index) {
+          final contact = contacts[index];
+          return Padding(
+            padding: EdgeInsets.only(bottom: 12), // Consistent spacing
+            child: AnimatedContainer(
+              duration: Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF2D3748).withOpacity(0.7),
+                    Color(0xFF1A202C).withOpacity(0.9),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Color(0xFF6C5CE7).withOpacity(0.3),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: Offset(0, 6),
+                    spreadRadius: 1,
+                  ),
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(12), // Reduced from 16
-              border: Border.all(
-                color: Color(0xFF6C5CE7).withOpacity(0.2),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black
-                      .withOpacity(0.25), // Reduced opacity from 0.3
-                  blurRadius: 8, // Reduced from 10
-                  offset: Offset(0, 4), // Reduced from Offset(0, 5)
-                ),
-              ],
-            ),
-            child: ListTile(
-              contentPadding: EdgeInsets.all(12), // Reduced from 16
-              leading: Container(
-                width: 50, // Reduced from 60
-                height: 50, // Reduced from 60
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
-                  ),
-                  borderRadius: BorderRadius.circular(25), // Reduced from 30
-                ),
-                child: Icon(
-                  contact['image'],
-                  color: Colors.white,
-                  size: 26, // Reduced from 30
-                ),
-              ),
-              title: Text(
-                contact['name'],
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16, // Reduced from 18
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 3), // Reduced from 4
-                  Text(
-                    contact['role'],
-                    style: TextStyle(
-                      color: Color(0xFF6C5CE7),
-                      fontSize: 13, // Reduced from 14
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 6), // Reduced from 8
-                  Row(
-                    children: [
-                      Icon(Icons.phone,
-                          color: Colors.white60, size: 14), // Reduced from 16
-                      SizedBox(width: 5), // Reduced from 6
-                      Text(
-                        contact['phone'],
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12, // Reduced from 13
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 3), // Reduced from 4
-                  Row(
-                    children: [
-                      Icon(Icons.email,
-                          color: Colors.white60, size: 14), // Reduced from 16
-                      SizedBox(width: 5), // Reduced from 6
-                      Expanded(
-                        child: Text(
-                          contact['email'],
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12, // Reduced from 13
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                    // Optional: Add contact details navigation
+                  },
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        // Avatar
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(28),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xFF6C5CE7).withOpacity(0.4),
+                                blurRadius: 8,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            contact['image'],
+                            color: Colors.white,
+                            size: 28,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Color(0xFF6C5CE7).withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6), // Reduced from 8
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        // Handle phone call
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Calling ${contact['name']}...'),
-                            backgroundColor: Color(0xFF6C5CE7),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                        SizedBox(width: 16),
+
+                        // Contact Info
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                contact['name'],
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                contact['role'],
+                                style: TextStyle(
+                                  color: Color(0xFF6C5CE7),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+
+                              // Phone
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Icon(Icons.phone,
+                                        color: Colors.white70, size: 14),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      contact['phone'],
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 6),
+
+                              // Email
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Icon(Icons.email,
+                                        color: Colors.white70, size: 14),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      contact['email'],
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 13,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                        );
-                      },
-                      icon: Icon(Icons.phone, color: Color(0xFF6C5CE7)),
-                      iconSize: 18, // Reduced from 20
-                    ),
-                  ),
-                  SizedBox(width: 6), // Reduced from 8
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Color(0xFFA29BFE).withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6), // Reduced from 8
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        // Handle email
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Emailing ${contact['name']}...'),
-                            backgroundColor: Color(0xFFA29BFE),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                        ),
+
+                        // Action Buttons
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Color(0xFF6C5CE7).withOpacity(0.8),
+                                    Color(0xFF6C5CE7).withOpacity(0.6),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(22),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Color(0xFF6C5CE7).withOpacity(0.3),
+                                    blurRadius: 6,
+                                    offset: Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(22),
+                                  onTap: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Row(
+                                          children: [
+                                            Icon(Icons.phone,
+                                                color: Colors.white, size: 20),
+                                            SizedBox(width: 8),
+                                            Text(
+                                                'Calling ${contact['name']}...'),
+                                          ],
+                                        ),
+                                        backgroundColor: Color(0xFF6C5CE7),
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        margin: EdgeInsets.all(16),
+                                      ),
+                                    );
+                                  },
+                                  child: Icon(Icons.phone,
+                                      color: Colors.white, size: 20),
+                                ),
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                      icon: Icon(Icons.email, color: Color(0xFFA29BFE)),
-                      iconSize: 18, // Reduced from 20
+                            SizedBox(height: 8),
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Color(0xFFA29BFE).withOpacity(0.8),
+                                    Color(0xFFA29BFE).withOpacity(0.6),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(22),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Color(0xFFA29BFE).withOpacity(0.3),
+                                    blurRadius: 6,
+                                    offset: Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(22),
+                                  onTap: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Row(
+                                          children: [
+                                            Icon(Icons.email,
+                                                color: Colors.white, size: 20),
+                                            SizedBox(width: 8),
+                                            Text(
+                                                'Emailing ${contact['name']}...'),
+                                          ],
+                                        ),
+                                        backgroundColor: Color(0xFFA29BFE),
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        margin: EdgeInsets.all(16),
+                                      ),
+                                    );
+                                  },
+                                  child: Icon(Icons.email,
+                                      color: Colors.white, size: 20),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
   Widget _buildAlertsTab() {
     return ListView.builder(
-      padding:
-          EdgeInsets.only(top: 16, bottom: 100), // Reduced top padding from 20
+      padding: EdgeInsets.only(top: 16, bottom: 100),
       physics: BouncingScrollPhysics(),
       itemCount: alerts.length,
       itemBuilder: (context, index) {
         final alert = alerts[index];
         return Padding(
-          padding: EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 6), // Reduced horizontal from 20, vertical from 8
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -1100,7 +1756,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(12), // Reduced from 16
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: alert['isRead']
                     ? Colors.transparent
@@ -1109,28 +1765,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black
-                      .withOpacity(0.25), // Reduced opacity from 0.3
-                  blurRadius: 8, // Reduced from 10
-                  offset: Offset(0, 4), // Reduced from Offset(0, 5)
+                  color: Colors.black.withOpacity(0.25),
+                  blurRadius: 8,
+                  offset: Offset(0, 4),
                 ),
               ],
             ),
             child: ListTile(
-              contentPadding: EdgeInsets.all(12), // Reduced from 16
+              contentPadding: EdgeInsets.all(12),
               leading: Container(
-                width: 42, // Reduced from 50
-                height: 42, // Reduced from 50
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: _getAlertColors(alert['type']),
                   ),
-                  borderRadius: BorderRadius.circular(21), // Reduced from 25
+                  borderRadius: BorderRadius.circular(21),
                 ),
                 child: Icon(
                   _getAlertIcon(alert['type']),
                   color: Colors.white,
-                  size: 20, // Reduced from 24
+                  size: 20,
                 ),
               ),
               title: Row(
@@ -1140,19 +1795,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       alert['title'],
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 14, // Reduced from 16
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                   if (!alert['isRead'])
                     Container(
-                      width: 6, // Reduced from 8
-                      height: 6, // Reduced from 8
+                      width: 6,
+                      height: 6,
                       decoration: BoxDecoration(
                         color: Color(0xFF6C5CE7),
-                        borderRadius:
-                            BorderRadius.circular(3), // Reduced from 4
+                        borderRadius: BorderRadius.circular(3),
                       ),
                     ),
                 ],
@@ -1160,28 +1814,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 4), // Reduced from 6
+                  SizedBox(height: 4),
                   Text(
                     alert['message'],
                     style: TextStyle(
                       color: Colors.white70,
-                      fontSize: 12, // Reduced from 14
+                      fontSize: 12,
                       height: 1.4,
                     ),
                   ),
-                  SizedBox(height: 6), // Reduced from 8
+                  SizedBox(height: 6),
                   Text(
                     alert['time'],
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 11, // Reduced from 12
+                      fontSize: 11,
                     ),
                   ),
                 ],
               ),
               trailing: PopupMenuButton(
-                icon: Icon(Icons.more_vert,
-                    color: Colors.white60, size: 20), // Reduced size
+                icon: Icon(Icons.more_vert, color: Colors.white60, size: 20),
                 color: Color(0xFF2D3748),
                 itemBuilder: (context) => [
                   PopupMenuItem(
@@ -1192,9 +1845,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               ? Icons.mark_as_unread
                               : Icons.mark_email_read,
                           color: Colors.white70,
-                          size: 16, // Reduced from 18
+                          size: 16,
                         ),
-                        SizedBox(width: 6), // Reduced from 8
+                        SizedBox(width: 6),
                         Text(
                           alert['isRead'] ? 'Mark as unread' : 'Mark as read',
                           style: TextStyle(color: Colors.white70, fontSize: 13),
@@ -1210,9 +1863,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   PopupMenuItem(
                     child: Row(
                       children: [
-                        Icon(Icons.delete,
-                            color: Colors.red, size: 16), // Reduced from 18
-                        SizedBox(width: 6), // Reduced from 8
+                        Icon(Icons.delete, color: Colors.red, size: 16),
+                        SizedBox(width: 6),
                         Text(
                           'Delete',
                           style: TextStyle(color: Colors.red, fontSize: 13),
