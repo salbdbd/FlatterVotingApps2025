@@ -1127,11 +1127,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               for (var i = 0;
                                   i <=
                                       ledgerController.ledgerList.indexOf(item);
-                                  i++) {
+                                  ++i) {
                                 final currentItem =
                                     ledgerController.ledgerList[i];
                                 cumulativeBalance += (currentItem.drAmount -
-                                    currentItem.drAmount);
+                                    currentItem.crAmount);
                               }
 
                               return TableRow(
