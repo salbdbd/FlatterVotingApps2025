@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -825,7 +826,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  // NEW Accounts Tab Implementation
   Widget _buildAccountsTab() {
     return Obx(() {
       if (ledgerController.isLoading.value) {
@@ -903,10 +903,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       return Column(
         children: [
-          // Compact Summary Card
+          // Enhanced Summary Card
           Container(
             margin: EdgeInsets.fromLTRB(16, 12, 16, 8),
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -916,253 +916,158 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: Color(0xFF6C5CE7).withOpacity(0.3),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 8,
-                  offset: Offset(0, 3),
+                  color: Colors.black.withOpacity(0.25),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                  spreadRadius: 1,
                 ),
               ],
             ),
             child: Row(
               children: [
                 Expanded(
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF6C5CE7).withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Icon(
-                          Icons.receipt_long,
-                          color: Color(0xFF6C5CE7),
-                          size: 16,
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Records',
-                            style: TextStyle(
-                              color: Colors.white60,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            '${ledgerController.ledgerList.length}',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                  child: _buildSummaryItem(
+                    icon: Icons.receipt_long,
+                    label: 'Total Records',
+                    value: '${ledgerController.ledgerList.length}',
+                    color: Color(0xFF6C5CE7),
                   ),
                 ),
                 Container(
                   width: 1,
-                  height: 35,
+                  height: 40,
                   color: Colors.white.withOpacity(0.2),
                 ),
-                SizedBox(width: 12),
+                SizedBox(width: 16),
                 Expanded(
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: ledgerController.runningBalance.value >= 0
-                              ? Color(0xFF00D2FF).withOpacity(0.2)
-                              : Color(0xFFFF6B6B).withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Icon(
-                          ledgerController.runningBalance.value >= 0
-                              ? Icons.trending_up
-                              : Icons.trending_down,
-                          color: ledgerController.runningBalance.value >= 0
-                              ? Color(0xFF00D2FF)
-                              : Color(0xFFFF6B6B),
-                          size: 16,
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Flexible(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Balance',
-                              style: TextStyle(
-                                color: Colors.white60,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Obx(() => Text(
-                                  '৳${ledgerController.runningBalance.value.toStringAsFixed(2)}',
-                                  style: TextStyle(
-                                    color:
-                                        ledgerController.runningBalance.value >=
-                                                0
-                                            ? Color(0xFF00D2FF)
-                                            : Color(0xFFFF6B6B),
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                )),
-                          ],
-                        ),
-                      ),
-                    ],
+                  child: _buildSummaryItem(
+                    icon: ledgerController.runningBalance.value >= 0
+                        ? Icons.trending_up
+                        : Icons.trending_down,
+                    label: 'Current Balance',
+                    value:
+                        '৳${ledgerController.runningBalance.value.toStringAsFixed(2)}',
+                    color: ledgerController.runningBalance.value >= 0
+                        ? Color(0xFF00D2FF)
+                        : Color(0xFFFF6B6B),
                   ),
                 ),
               ],
             ),
           ),
 
-          // Main Table - Now using a SingleChildScrollView for both horizontal and vertical scrolling
+          // Enhanced Table
           Expanded(
             child: Container(
               margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xFF2D3748).withOpacity(0.6),
-                    Color(0xFF1A202C).withOpacity(0.8),
+                    Color(0xFF2D3748).withOpacity(0.7),
+                    Color(0xFF1A202C).withOpacity(0.9),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: Color(0xFF6C5CE7).withOpacity(0.2),
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 8,
+                    color: Colors.black.withOpacity(0.25),
+                    blurRadius: 12,
                     offset: Offset(0, 4),
                   ),
                 ],
               ),
-              child: Scrollbar(
-                thumbVisibility: true,
-                thickness: 6,
-                radius: Radius.circular(3),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  physics: ClampingScrollPhysics(),
-                  child: Scrollbar(
-                    thumbVisibility: true,
-                    thickness: 6,
-                    radius: Radius.circular(3),
-                    // scrollbarOrientation: ScrollbarOrientation.left && ,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      physics: ClampingScrollPhysics(),
-                      child: Container(
-                        padding: EdgeInsets.only(bottom: 16),
-                        child: Table(
-                          columnWidths: {
-                            0: FixedColumnWidth(90), // Trans ID
-                            1: FixedColumnWidth(85), // Date
-                            2: FixedColumnWidth(100), // Voucher
-                            3: FixedColumnWidth(180), // Account Head
-                            4: FixedColumnWidth(110), // Bill Amt
-                            5: FixedColumnWidth(110), // Paid Amt
-                            6: FixedColumnWidth(100), // Balance
-                          },
-                          border: TableBorder(
-                            horizontalInside: BorderSide(
-                              color: Colors.white.withOpacity(0.1),
-                              width: 0.5,
-                            ),
-                          ),
-                          children: [
-                            // Table Header
-                            TableRow(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Color(0xFF6C5CE7),
-                                    Color(0xFFA29BFE)
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(12),
-                                  topRight: Radius.circular(12),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Column(
+                  children: [
+                    // Table Header
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(flex: 2, child: _buildHeaderText('Date')),
+                          // Expanded(flex: 2, child: _buildHeaderText('Voucher')),
+                          Expanded(
+                              flex: 3, child: _buildHeaderText('Account Head')),
+                          Expanded(
+                              flex: 3, child: _buildHeaderText('Bill Amount')),
+                          Expanded(
+                              flex: 3, child: _buildHeaderText('Paid Amount')),
+                          Expanded(flex: 3, child: _buildHeaderText('Balance')),
+                        ],
+                      ),
+                    ),
+
+                    // Table Body
+                    Expanded(
+                      child: ListView.builder(
+                        physics: ClampingScrollPhysics(),
+                        itemCount: ledgerController.ledgerList.length,
+                        itemBuilder: (context, index) {
+                          final item = ledgerController.ledgerList[index];
+
+                          // Calculate cumulative balance for this row
+                          double cumulativeBalance = 0;
+                          for (var i = 0; i <= index; i++) {
+                            final currentItem = ledgerController.ledgerList[i];
+                            cumulativeBalance +=
+                                (currentItem.drAmount - currentItem.crAmount);
+                          }
+
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: index % 2 == 0
+                                  ? Colors.transparent
+                                  : Colors.white.withOpacity(0.03),
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.white.withOpacity(0.08),
+                                  width: 0.5,
                                 ),
                               ),
-                              children: [
-                                _buildHeaderCell('Trans ID'),
-                                _buildHeaderCell('Date'),
-                                _buildHeaderCell('Voucher'),
-                                _buildHeaderCell('Account Head'),
-                                _buildHeaderCell('Bill Amt'),
-                                _buildHeaderCell('Paid Amt'),
-                                _buildHeaderCell('Balance'),
-                              ],
                             ),
-                            // Table Data
-                            ...ledgerController.ledgerList.map((item) {
-                              // Calculate cumulative balance for this row
-                              double cumulativeBalance = 0;
-                              for (var i = 0;
-                                  i <=
-                                      ledgerController.ledgerList.indexOf(item);
-                                  ++i) {
-                                final currentItem =
-                                    ledgerController.ledgerList[i];
-                                cumulativeBalance += (currentItem.drAmount -
-                                    currentItem.crAmount);
-                              }
-
-                              return TableRow(
-                                decoration: BoxDecoration(
-                                  color: ledgerController.ledgerList
-                                                  .indexOf(item) %
-                                              2 ==
-                                          0
-                                      ? Colors.transparent
-                                      : Colors.white.withOpacity(0.03),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: _buildDataText(
+                                    _formatDates(item.vdate),
+                                    Colors.white70,
+                                    FontWeight.w500,
+                                  ),
                                 ),
-                                children: [
-                                  _buildDataCell(
-                                    item.transId.toString() ?? 'N/A',
-                                    Colors.white,
-                                    FontWeight.w600,
-                                    TextAlign.left,
-                                  ),
-                                  _buildDataCell(
-                                    _formatDate(item.vdate),
-                                    Colors.white70,
-                                    FontWeight.normal,
-                                    TextAlign.left,
-                                  ),
-                                  _buildDataCell(
-                                    item.vno,
-                                    Colors.white70,
-                                    FontWeight.normal,
-                                    TextAlign.left,
-                                  ),
-                                  _buildDataCell(
+                                // Expanded(
+                                //   flex: 2,
+                                //   child: _buildDataText(
+                                //     item.vno.isNotEmpty ? item.vno : '-',
+                                //     Colors.white70,
+                                //     FontWeight.normal,
+                                //   ),
+                                // ),
+                                Expanded(
+                                  flex: 3,
+                                  child: _buildDataText(
                                     item.accountName.isNotEmpty
                                         ? item.accountName
                                         : (item.aliasName.isNotEmpty
@@ -1170,44 +1075,45 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                             : 'N/A'),
                                     Colors.white,
                                     FontWeight.w500,
-                                    TextAlign.left,
                                   ),
-                                  _buildDataCell(
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: _buildAmountText(
                                     '৳${item.drAmount.toStringAsFixed(0)}',
                                     item.drAmount > 0
                                         ? Color(0xFFFF6B6B)
-                                        : Colors.white60,
-                                    item.drAmount > 0
-                                        ? FontWeight.w600
-                                        : FontWeight.normal,
-                                    TextAlign.right,
+                                        : Colors.white,
+                                    item.drAmount > 0,
                                   ),
-                                  _buildDataCell(
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: _buildAmountText(
                                     '৳${item.crAmount.toStringAsFixed(0)}',
                                     item.crAmount > 0
                                         ? Color(0xFF00D2FF)
-                                        : Colors.white60,
-                                    item.crAmount > 0
-                                        ? FontWeight.w600
-                                        : FontWeight.normal,
-                                    TextAlign.right,
+                                        : Colors.white,
+                                    item.crAmount > 0,
                                   ),
-                                  _buildDataCell(
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: _buildAmountText(
                                     '৳${cumulativeBalance.toStringAsFixed(0)}',
                                     cumulativeBalance >= 0
                                         ? Color(0xFF00D2FF)
                                         : Color(0xFFFF6B6B),
-                                    FontWeight.bold,
-                                    TextAlign.right,
+                                    true,
                                   ),
-                                ],
-                              );
-                            }).toList(),
-                          ],
-                        ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -1217,42 +1123,97 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-// Helper method for table header cells
-  Widget _buildHeaderCell(String text) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-          color: Colors.white,
-          letterSpacing: 0.3,
+// Enhanced helper method for summary items
+  Widget _buildSummaryItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: color,
+            size: 18,
+          ),
         ),
-        textAlign: TextAlign.left,
-      ),
+        SizedBox(width: 12),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white60,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-// Helper method for table data cells
-  Widget _buildDataCell(
-    String text,
-    Color color,
-    FontWeight fontWeight,
-    TextAlign textAlign,
-  ) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 11,
-          color: color,
-          fontWeight: fontWeight,
-        ),
-        textAlign: textAlign,
-        overflow: TextOverflow.ellipsis,
+// Helper method for table header text
+  Widget _buildHeaderText(String text) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 13,
+        color: Colors.white,
+        letterSpacing: 0.3,
       ),
+      textAlign: TextAlign.left,
+    );
+  }
+
+// Helper method for regular data text
+  Widget _buildDataText(String text, Color color, FontWeight fontWeight) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 12,
+        color: color,
+        fontWeight: fontWeight,
+      ),
+      overflow: TextOverflow.ellipsis,
+      maxLines: 2,
+    );
+  }
+
+// Helper method for amount text with right alignment
+  Widget _buildAmountText(String text, Color color, bool isBold) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 12,
+        color: color,
+        fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
+      ),
+      textAlign: TextAlign.right,
+      overflow: TextOverflow.ellipsis,
     );
   }
 
@@ -1388,7 +1349,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       child: ListView.builder(
         padding:
             EdgeInsets.fromLTRB(16, 16, 16, 120), // Added more bottom padding
-        physics: BouncingScrollPhysics(),
+        physics: NeverScrollableScrollPhysics(),
         itemCount: contacts.length,
         itemBuilder: (context, index) {
           final contact = contacts[index];
@@ -1847,10 +1808,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         return Icons.notifications;
     }
   }
+  // Enhanced date formatting method
+  // String _formatDate(DateTime? date) {
+  //   if (date == null) return 'N/A';
 
-  String _formatDate(String vdate) {
+  //   String day = date.day.toString().padLeft(2, '0');
+  //   String month = date.month.toString().padLeft(2, '0');
+  //   String year = date.year.toString();
+
+  //   return '$day-$month-$year';
+  // }
+
+  String _formatDates(String vdate) {
     DateTime dateTime = DateTime.parse(vdate);
-    return DateFormat('yyyy-MM-dd').format(dateTime);
+    log(
+        name: 'dateFormat',
+        'Formatted date: ${DateFormat('dd-MM-yyyy').format(dateTime)}');
+    return DateFormat('dd-MM-yyyy').format(dateTime);
   }
 }
 
