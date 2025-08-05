@@ -12,6 +12,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:dots_indicator/dots_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:get/get.dart';
 
@@ -1035,7 +1036,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
 
-          // Responsive Horizontal Scrollable Table
+          // Main Table - Now using a SingleChildScrollView for both horizontal and vertical scrolling
           Expanded(
             child: Container(
               margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -1061,216 +1062,153 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ],
               ),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  // Responsive column widths based on screen width
-                  double screenWidth = constraints.maxWidth;
-                  bool isSmallScreen = screenWidth < 400;
-                  bool isMediumScreen = screenWidth >= 400 && screenWidth < 600;
-
-                  // Adjust column widths responsively
-                  double transIdWidth = isSmallScreen ? 80 : 90;
-                  double dateWidth = isSmallScreen ? 75 : 85;
-                  double voucherWidth = isSmallScreen ? 90 : 100;
-                  double accountWidth =
-                      isSmallScreen ? 140 : (isMediumScreen ? 160 : 180);
-                  double billAmtWidth = isSmallScreen ? 100 : 110;
-                  double paidAmtWidth = isSmallScreen ? 100 : 110;
-                  double balanceWidth = isSmallScreen ? 90 : 100;
-
-                  double totalTableWidth = transIdWidth +
-                      dateWidth +
-                      voucherWidth +
-                      accountWidth +
-                      billAmtWidth +
-                      paidAmtWidth +
-                      balanceWidth +
-                      46; // 46 for spacing (12+4+4+4+4+4+2+4+12)
-
-                  // Create a single scroll controller for both header and data
-                  ScrollController _horizontalScrollController =
-                      ScrollController();
-
-                  return Column(
-                    children: [
-                      // Responsive Table Header with synchronized scrolling
-                      Container(
-                        padding: EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
+              child: Scrollbar(
+                thumbVisibility: true,
+                thickness: 6,
+                radius: Radius.circular(3),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  physics: ClampingScrollPhysics(),
+                  child: Scrollbar(
+                    thumbVisibility: true,
+                    thickness: 6,
+                    radius: Radius.circular(3),
+                    // scrollbarOrientation: ScrollbarOrientation.left && ,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: ClampingScrollPhysics(),
+                      child: Container(
+                        padding: EdgeInsets.only(bottom: 16),
+                        child: Table(
+                          columnWidths: {
+                            0: FixedColumnWidth(90), // Trans ID
+                            1: FixedColumnWidth(85), // Date
+                            2: FixedColumnWidth(100), // Voucher
+                            3: FixedColumnWidth(180), // Account Head
+                            4: FixedColumnWidth(110), // Bill Amt
+                            5: FixedColumnWidth(110), // Paid Amt
+                            6: FixedColumnWidth(100), // Balance
+                          },
+                          border: TableBorder(
+                            horizontalInside: BorderSide(
+                              color: Colors.white.withOpacity(0.1),
+                              width: 0.5,
+                            ),
                           ),
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(12),
-                            topRight: Radius.circular(12),
-                          ),
-                        ),
-                        child: SingleChildScrollView(
-                          controller: _horizontalScrollController,
-                          scrollDirection: Axis.horizontal,
-                          child: Container(
-                            width: totalTableWidth,
-                            child: Row(
+                          children: [
+                            // Table Header
+                            TableRow(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Color(0xFF6C5CE7),
+                                    Color(0xFFA29BFE)
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(12),
+                                  topRight: Radius.circular(12),
+                                ),
+                              ),
                               children: [
-                                SizedBox(width: 12),
-                                _buildHeaderCell(
-                                    'Trans ID', transIdWidth, isSmallScreen),
-                                SizedBox(width: 4),
-                                _buildHeaderCell(
-                                    'Date', dateWidth, isSmallScreen),
-                                SizedBox(width: 4),
-                                _buildHeaderCell(
-                                    'Voucher', voucherWidth, isSmallScreen),
-                                SizedBox(width: 4),
-                                _buildHeaderCell('Account Head', accountWidth,
-                                    isSmallScreen),
-                                SizedBox(width: 4),
-                                _buildHeaderCell(
-                                    'Bill Amt', billAmtWidth, isSmallScreen),
-                                SizedBox(width: 2),
-                                _buildHeaderCell(
-                                    'Paid Amt', paidAmtWidth, isSmallScreen),
-                                SizedBox(width: 4),
-                                _buildHeaderCell(
-                                    'Balance', balanceWidth, isSmallScreen),
-                                SizedBox(width: 12),
+                                _buildHeaderCell('Trans ID'),
+                                _buildHeaderCell('Date'),
+                                _buildHeaderCell('Voucher'),
+                                _buildHeaderCell('Account Head'),
+                                _buildHeaderCell('Bill Amt'),
+                                _buildHeaderCell('Paid Amt'),
+                                _buildHeaderCell('Balance'),
                               ],
                             ),
-                          ),
+                            // Table Data
+                            ...ledgerController.ledgerList.map((item) {
+                              // Calculate cumulative balance for this row
+                              double cumulativeBalance = 0;
+                              for (var i = 0;
+                                  i <=
+                                      ledgerController.ledgerList.indexOf(item);
+                                  i++) {
+                                final currentItem =
+                                    ledgerController.ledgerList[i];
+                                cumulativeBalance += (currentItem.drAmount -
+                                    currentItem.drAmount);
+                              }
+
+                              return TableRow(
+                                decoration: BoxDecoration(
+                                  color: ledgerController.ledgerList
+                                                  .indexOf(item) %
+                                              2 ==
+                                          0
+                                      ? Colors.transparent
+                                      : Colors.white.withOpacity(0.03),
+                                ),
+                                children: [
+                                  _buildDataCell(
+                                    item.transId.toString() ?? 'N/A',
+                                    Colors.white,
+                                    FontWeight.w600,
+                                    TextAlign.left,
+                                  ),
+                                  _buildDataCell(
+                                    _formatDate(item.vdate),
+                                    Colors.white70,
+                                    FontWeight.normal,
+                                    TextAlign.left,
+                                  ),
+                                  _buildDataCell(
+                                    item.vno,
+                                    Colors.white70,
+                                    FontWeight.normal,
+                                    TextAlign.left,
+                                  ),
+                                  _buildDataCell(
+                                    item.accountName.isNotEmpty
+                                        ? item.accountName
+                                        : (item.aliasName.isNotEmpty
+                                            ? item.aliasName
+                                            : 'N/A'),
+                                    Colors.white,
+                                    FontWeight.w500,
+                                    TextAlign.left,
+                                  ),
+                                  _buildDataCell(
+                                    '৳${item.drAmount.toStringAsFixed(0)}',
+                                    item.drAmount > 0
+                                        ? Color(0xFFFF6B6B)
+                                        : Colors.white60,
+                                    item.drAmount > 0
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                    TextAlign.right,
+                                  ),
+                                  _buildDataCell(
+                                    '৳${item.crAmount.toStringAsFixed(0)}',
+                                    item.crAmount > 0
+                                        ? Color(0xFF00D2FF)
+                                        : Colors.white60,
+                                    item.crAmount > 0
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                    TextAlign.right,
+                                  ),
+                                  _buildDataCell(
+                                    '৳${cumulativeBalance.toStringAsFixed(0)}',
+                                    cumulativeBalance >= 0
+                                        ? Color(0xFF00D2FF)
+                                        : Color(0xFFFF6B6B),
+                                    FontWeight.bold,
+                                    TextAlign.right,
+                                  ),
+                                ],
+                              );
+                            }).toList(),
+                          ],
                         ),
                       ),
-
-                      // Responsive Table Data with synchronized horizontal scroll
-                      Expanded(
-                        child: Scrollbar(
-                          thumbVisibility: true,
-                          thickness: 3,
-                          radius: Radius.circular(2),
-                          child: SingleChildScrollView(
-                            controller: _horizontalScrollController,
-                            scrollDirection: Axis.horizontal,
-                            child: Container(
-                              width: totalTableWidth,
-                              child: ListView.builder(
-                                padding: EdgeInsets.only(bottom: 100),
-                                itemCount: ledgerController.ledgerList.length,
-                                itemBuilder: (context, index) {
-                                  final item =
-                                      ledgerController.ledgerList[index];
-                                  double balance =
-                                      item.drAmount - item.crAmount;
-
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      color: index % 2 == 0
-                                          ? Colors.transparent
-                                          : Colors.white.withOpacity(0.03),
-                                      border: Border(
-                                        bottom: BorderSide(
-                                          color: Colors.white.withOpacity(0.1),
-                                          width: 0.5,
-                                        ),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        SizedBox(width: 12),
-                                        // Trans ID
-                                        _buildDataCell(
-                                          item.transId.toString() ?? 'N/A',
-                                          transIdWidth,
-                                          Colors.white,
-                                          FontWeight.w600,
-                                          TextAlign.left,
-                                          isSmallScreen,
-                                        ),
-                                        SizedBox(width: 4),
-                                        // Date
-                                        _buildDataCell(
-                                          _formatDate(item.vdate),
-                                          dateWidth,
-                                          Colors.white70,
-                                          FontWeight.normal,
-                                          TextAlign.left,
-                                          isSmallScreen,
-                                        ),
-                                        SizedBox(width: 4),
-                                        // Voucher No
-                                        _buildDataCell(
-                                          item.vno,
-                                          voucherWidth,
-                                          Colors.white70,
-                                          FontWeight.normal,
-                                          TextAlign.left,
-                                          isSmallScreen,
-                                        ),
-                                        SizedBox(width: 4),
-                                        // Account Head
-                                        _buildDataCell(
-                                          item.accountName.isNotEmpty
-                                              ? item.accountName
-                                              : (item.aliasName.isNotEmpty
-                                                  ? item.aliasName
-                                                  : 'N/A'),
-                                          accountWidth,
-                                          Colors.white,
-                                          FontWeight.w500,
-                                          TextAlign.left,
-                                          isSmallScreen,
-                                        ),
-                                        SizedBox(width: 4),
-                                        // Bill Amount (Dr Amount)
-                                        _buildDataCell(
-                                          '৳${item.drAmount.toStringAsFixed(0)}',
-                                          billAmtWidth,
-                                          item.drAmount > 0
-                                              ? Color(0xFFFF6B6B)
-                                              : Colors.white60,
-                                          item.drAmount > 0
-                                              ? FontWeight.w600
-                                              : FontWeight.normal,
-                                          TextAlign.right,
-                                          isSmallScreen,
-                                        ),
-                                        SizedBox(width: 2),
-                                        // Paid Amount (Cr Amount)
-                                        _buildDataCell(
-                                          '৳${item.crAmount.toStringAsFixed(0)}',
-                                          paidAmtWidth,
-                                          item.crAmount > 0
-                                              ? Color(0xFF00D2FF)
-                                              : Colors.white60,
-                                          item.crAmount > 0
-                                              ? FontWeight.w600
-                                              : FontWeight.normal,
-                                          TextAlign.right,
-                                          isSmallScreen,
-                                        ),
-                                        SizedBox(width: 4),
-                                        // Balance
-                                        _buildDataCell(
-                                          '৳${balance.toStringAsFixed(0)}',
-                                          balanceWidth,
-                                          balance >= 0
-                                              ? Color(0xFF00D2FF)
-                                              : Color(0xFFFF6B6B),
-                                          FontWeight.bold,
-                                          TextAlign.right,
-                                          isSmallScreen,
-                                        ),
-                                        SizedBox(width: 12),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -1279,62 +1217,43 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-// Helper method for responsive table header cells
-  Widget _buildHeaderCell(String text, double width, bool isSmallScreen) {
-    return Container(
-      width: width,
-      padding: EdgeInsets.symmetric(horizontal: 4),
+// Helper method for table header cells
+  Widget _buildHeaderCell(String text) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       child: Text(
         text,
         style: TextStyle(
           fontWeight: FontWeight.bold,
-          fontSize: isSmallScreen ? 11 : 12,
+          fontSize: 12,
           color: Colors.white,
           letterSpacing: 0.3,
         ),
         textAlign: TextAlign.left,
-        overflow: TextOverflow.ellipsis,
       ),
     );
   }
 
-// Helper method for responsive table data cells
+// Helper method for table data cells
   Widget _buildDataCell(
     String text,
-    double width,
     Color color,
     FontWeight fontWeight,
     TextAlign textAlign,
-    bool isSmallScreen,
   ) {
-    return Container(
-      width: width,
-      padding: EdgeInsets.symmetric(
-          horizontal: 4, vertical: isSmallScreen ? 10 : 12),
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Text(
         text,
         style: TextStyle(
-          fontSize: isSmallScreen ? 10 : 11,
+          fontSize: 11,
           color: color,
           fontWeight: fontWeight,
         ),
         textAlign: textAlign,
         overflow: TextOverflow.ellipsis,
-        maxLines: isSmallScreen ? 1 : 2,
       ),
     );
-  }
-
-  // Helper method to format date strings
-  String _formatDate(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) return 'N/A';
-    try {
-      final date = DateTime.parse(dateStr);
-      // Format as dd-MM-yyyy or any format you prefer
-      return "${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}";
-    } catch (e) {
-      return dateStr;
-    }
   }
 
   // Keep all your existing methods
@@ -1927,6 +1846,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       default:
         return Icons.notifications;
     }
+  }
+
+  String _formatDate(String vdate) {
+    DateTime dateTime = DateTime.parse(vdate);
+    return DateFormat('yyyy-MM-dd').format(dateTime);
   }
 }
 
