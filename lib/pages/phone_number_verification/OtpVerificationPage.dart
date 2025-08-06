@@ -1,10 +1,8 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:lottie/lottie.dart';
-
 import '../indexing_page/indexing_page.dart';
 import '../voting_page/voting_page.dart';
 
@@ -84,12 +82,10 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
     } on PlatformException catch (e) {
       print(e);
     }
-
     setState(() {
       authorized =
           authenticated ? "Authorized success" : "Failed to authenticate";
       print(authorized);
-
       if (authenticated) {
         // If authentication is successful, navigate to the homepage
         Navigator.pushReplacement(

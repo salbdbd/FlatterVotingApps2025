@@ -272,8 +272,10 @@ class _ProfilePageState extends State<ProfilePage>
                 color: Colors.orange.withOpacity(0.3),
               ),
             ),
+            //company name
             child: Text(
-              widget.userDetails?.userData.companyName ?? 'Company Name',
+              userNameController.text,
+              // widget.userDetails?.userData.companyName ?? 'Company Name',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,
