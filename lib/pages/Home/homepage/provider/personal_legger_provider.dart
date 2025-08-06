@@ -1,5 +1,8 @@
 // import 'dart:convert';
+import 'dart:developer';
+
 import 'package:association/models/loger_item_model.dart';
+import 'package:association/pages/dashboard/dashboard_page.dart';
 // import 'package:get/get.dart';
 // import 'package:http/http.dart' as http;
 
@@ -41,13 +44,17 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
 class LedgerController extends GetxController {
+  UserDetails userDetails;
+  LedgerController({required this.userDetails});
   var isLoading = true.obs;
   var ledgerList = <PersonalLedgerModel>[].obs;
   var runningBalance = 0.0.obs;
+  String get memberId => userDetails.selectedCompanyData.memberId.toString();
 
   Future<void> fetchLedger(String comCode, String mobile) async {
     try {
       isLoading(true);
+
       final url =
           'http://103.125.253.59:2004/api/v1/get_MemberPersonalLedger/$comCode/$mobile';
       final response = await http.get(Uri.parse(url));

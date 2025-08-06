@@ -25,17 +25,22 @@ import 'model/get_newsor_event_model.dart';
 
 // Add the LedgerController
 class LedgerController extends GetxController {
+  int compId;
+  int memberId;
+
+  LedgerController({required this.compId, required this.memberId});
   var isLoading = true.obs;
   var ledgerList = <PersonalLedgerModel>[].obs;
   var runningBalance = 0.0.obs;
+//   String get memberId => userDetails.selectedCompanyData.memberId.toString();
 
-  Future<void> fetchLedger(String comCode, String mobile) async {
+  Future<void> fetchLedger(int comCode, int mobile) async {
     try {
       isLoading(true);
       final url =
           'http://103.125.253.59:2004/api/v1/get_MemberPersonalLedger/$comCode/$mobile';
       final response = await http.get(Uri.parse(url));
-
+      log(name: 'api✅', url);
       if (response.statusCode == 200) {
         List jsonData = jsonDecode(response.body);
         ledgerList.value =
@@ -64,7 +69,8 @@ class LedgerController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchLedger('202', '01757389204');
+    fetchLedger(compId, memberId);
+    log(name: 'Dynaminc MemberID🔴', compId.toString() + memberId.toString());
   }
 }
 
@@ -90,19 +96,37 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late TabController _tabController;
-
-  // Add LedgerController instance
-  final LedgerController ledgerController = Get.put(LedgerController());
+  late final LedgerController ledgerController;
 
   @override
   void initState() {
     super.initState();
     print('NumberAnimation Widget Initialized');
     String userName = widget.userDetails?.selectedCompanyData.name ?? '';
+
+    super.initState();
+    print('NumberAnimation Widget Initialized');
+    String memberId =
+        widget.userDetails?.selectedCompanyData.memberId.toString() ?? '';
     nameController.text = userName;
+    print('User Name✅: $userName');
+    log(
+        name: '❗',
+        widget.userDetails?.selectedCompanyData.memberId.toString() ?? '');
+
+    log(
+        name: 'H-MemberID',
+        widget.userDetails?.selectedCompanyData.memberId.toString() ?? '0');
 
     // Updated tab controller to have 4 tabs instead of 3
     _tabController = TabController(length: 4, vsync: this);
+
+    ledgerController = Get.put(
+      LedgerController(
+        compId: widget.userDetails?.selectedCompanyData.compId ?? 0,
+        memberId: widget.userDetails?.selectedCompanyData.memberId ?? 0,
+      ),
+    );
 
     // Initialize animations
     _fadeAnimationController = AnimationController(
@@ -136,6 +160,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     loadDataSerially();
   }
 
+// Add LedgerController instance
+//   final LedgerController ledgerController = Get.put(LedgerController(
+//     compId: widget.userDetails?.selectedCompanyData.compId ?? 0,
+//     memberId: widget.userDetails?.selectedCompanyData.memberId ?? 0,
+//   ));
   Future<void> loadDataSerially() async {
     await fetchGetNewsorEvent();
     await fetchGetWMemberAccountTransaction();
@@ -490,7 +519,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     (BuildContext context, bool innerBoxIsScrolled) {
                   return <Widget>[
                     SliverAppBar(
-                      expandedHeight: 80.0,
+                      expandedHeight: 60.0,
                       floating: true,
                       pinned: false,
                       backgroundColor: Colors.transparent,
@@ -506,7 +535,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ),
                           child: SafeArea(
                             child: Padding(
-                              padding: EdgeInsets.all(16),
+                              padding: EdgeInsets.all(5),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -521,40 +550,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                         child: Icon(
                                           Icons.account_circle,
                                           color: Colors.white,
-                                          size: 24,
+                                          size: 40,
                                         ),
                                       ),
                                       SizedBox(width: 10),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Welcome back,',
-                                              style: TextStyle(
-                                                color: Colors.white70,
-                                                fontSize: 12,
+                                      Container(
+                                        child: Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              // Text(
+                                              //   'Welcome back,',
+                                              //   style: TextStyle(
+                                              //     color: Colors.white70,
+                                              //     fontSize: 12,
+                                              //   ),
+                                              // ),
+                                              Text(
+                                                nameController.text.isNotEmpty
+                                                    ? nameController.text
+                                                    : 'Member',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                               ),
-                                            ),
-                                            Text(
-                                              nameController.text.isNotEmpty
-                                                  ? nameController.text
-                                                  : 'Member',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                      Icon(
-                                        Icons.notifications_outlined,
-                                        color: Colors.white,
-                                        size: 22,
-                                      ),
+                                      //   Icon(
+                                      //     Icons.notifications_outlined,
+                                      //     color: Colors.white,
+                                      //     size: 22,
+                                      //   ),
                                     ],
                                   ),
                                 ],
@@ -771,6 +802,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       delegate: _SliverAppBarDelegate(
                         TabBar(
                           controller: _tabController,
+                          isScrollable: false, // Disable horizontal scrolling
                           indicatorColor: Color(0xFF6C5CE7),
                           indicatorWeight: 2,
                           indicatorSize: TabBarIndicatorSize.label,
@@ -778,28 +810,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           unselectedLabelColor: Colors.white60,
                           labelStyle: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 12, // Reduced font size to fit 4 tabs
+                            fontSize: 10, // Reduced to fit better
                           ),
                           unselectedLabelStyle: TextStyle(
                             fontWeight: FontWeight.normal,
-                            fontSize: 10, // Reduced font size to fit 4 tabs
+                            fontSize: 9, // Reduced to fit better
                           ),
                           tabs: [
                             Tab(
-                              icon: Icon(Icons.event, size: 16),
+                              icon: Icon(Icons.event, size: 14),
                               text: 'Events',
                             ),
                             Tab(
                               icon:
-                                  Icon(Icons.account_balance_wallet, size: 16),
+                                  Icon(Icons.account_balance_wallet, size: 14),
                               text: 'Accounts',
                             ),
                             Tab(
-                              icon: Icon(Icons.contacts, size: 16),
+                              icon: Icon(Icons.contacts, size: 14),
                               text: 'Contacts',
                             ),
                             Tab(
-                              icon: Icon(Icons.notifications, size: 16),
+                              icon: Icon(Icons.notifications, size: 14),
                               text: 'Alerts',
                             ),
                           ],
@@ -834,26 +866,46 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 60,
-                height: 60,
+                width: 70,
+                height: 70,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(35),
                   gradient: LinearGradient(
                     colors: [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF6C5CE7).withOpacity(0.3),
+                      blurRadius: 20,
+                      spreadRadius: 5,
+                    ),
+                  ],
                 ),
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  strokeWidth: 3,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      strokeWidth: 3,
+                    ),
+                    Icon(
+                      Icons.account_balance_wallet_outlined,
+                      color: Colors.white.withOpacity(0.5),
+                      size: 24,
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 24),
               Text(
                 'Loading account data...',
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
                 ),
               ),
             ],
@@ -867,34 +919,48 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 80,
-                height: 80,
+                width: 100,
+                height: 100,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(40),
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withOpacity(0.1),
+                      Colors.white.withOpacity(0.05),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(50),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 2,
+                  ),
                 ),
                 child: Icon(
                   Icons.account_balance_wallet_outlined,
-                  size: 40,
-                  color: Colors.white,
+                  size: 48,
+                  color: Colors.white.withOpacity(0.6),
                 ),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 24),
               Text(
                 'No account data available',
                 style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.white60,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 20,
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
                 ),
               ),
               SizedBox(height: 8),
               Text(
-                'Account records will appear here',
+                'Account records will appear here once data is loaded',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.white,
+                  fontWeight: FontWeight.w400,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
@@ -903,30 +969,36 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       return Column(
         children: [
-          // Enhanced Summary Card
+          // Enhanced Summary Card with Glass Morphism
           Container(
             margin: EdgeInsets.fromLTRB(16, 12, 16, 8),
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xFF2D3748).withOpacity(0.8),
-                  Color(0xFF1A202C).withOpacity(0.9),
+                  Color(0xFF2D3748).withOpacity(0.9),
+                  Color(0xFF1A202C).withOpacity(0.95),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: Color(0xFF6C5CE7).withOpacity(0.3),
-                width: 1,
+                color: Color(0xFF6C5CE7).withOpacity(0.4),
+                width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.25),
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
-                  spreadRadius: 1,
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: Offset(0, 8),
+                  spreadRadius: 2,
+                ),
+                BoxShadow(
+                  color: Color(0xFF6C5CE7).withOpacity(0.1),
+                  blurRadius: 40,
+                  offset: Offset(0, 0),
+                  spreadRadius: 10,
                 ),
               ],
             ),
@@ -934,23 +1006,33 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               children: [
                 Expanded(
                   child: _buildSummaryItem(
-                    icon: Icons.receipt_long,
+                    icon: Icons.receipt_long_rounded,
                     label: 'Total Records',
                     value: '${ledgerController.ledgerList.length}',
                     color: Color(0xFF6C5CE7),
                   ),
                 ),
                 Container(
-                  width: 1,
-                  height: 40,
-                  color: Colors.white.withOpacity(0.2),
+                  width: 1.5,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        Colors.white.withOpacity(0.3),
+                        Colors.transparent,
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
                 ),
-                SizedBox(width: 16),
+                SizedBox(width: 20),
                 Expanded(
                   child: _buildSummaryItem(
                     icon: ledgerController.runningBalance.value >= 0
-                        ? Icons.trending_up
-                        : Icons.trending_down,
+                        ? Icons.trending_up_rounded
+                        : Icons.trending_down_rounded,
                     label: 'Current Balance',
                     value:
                         '৳${ledgerController.runningBalance.value.toStringAsFixed(2)}',
@@ -963,61 +1045,78 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
 
-          // Enhanced Table
+          // Enhanced Table with Perfect Alignment
           Expanded(
             child: Container(
-              margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+              margin: EdgeInsets.fromLTRB(8, 0, 8, 8),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xFF2D3748).withOpacity(0.7),
-                    Color(0xFF1A202C).withOpacity(0.9),
+                    Color(0xFF2D3748).withOpacity(0.8),
+                    Color(0xFF1A202C).withOpacity(0.95),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: Color(0xFF6C5CE7).withOpacity(0.2),
-                  width: 1,
+                  color: Color(0xFF6C5CE7).withOpacity(0.3),
+                  width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.25),
-                    blurRadius: 12,
-                    offset: Offset(0, 4),
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: Offset(0, 8),
+                  ),
+                  BoxShadow(
+                    color: Color(0xFF6C5CE7).withOpacity(0.05),
+                    blurRadius: 30,
+                    offset: Offset(0, 0),
+                    spreadRadius: 5,
                   ),
                 ],
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
                 child: Column(
                   children: [
-                    // Table Header
+                    // Enhanced Table Header with Perfect Alignment
                     Container(
-                      padding:
-                          EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                      height: 56, // Fixed height for consistent alignment
+                      padding: EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
+                          colors: [
+                            Color(0xFF6C5CE7),
+                            Color(0xFFA29BFE),
+                            Color(0xFF74B9FF),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 10,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment
+                            .center, // Perfect vertical alignment
                         children: [
-                          Expanded(flex: 2, child: _buildHeaderText('Date')),
-                          // Expanded(flex: 2, child: _buildHeaderText('Voucher')),
-                          Expanded(
-                              flex: 3, child: _buildHeaderText('Account Head')),
-                          Expanded(
-                              flex: 3, child: _buildHeaderText('Bill Amount')),
-                          Expanded(
-                              flex: 3, child: _buildHeaderText('Paid Amount')),
+                          Expanded(flex: 3, child: _buildHeaderText('Date')),
+                          Expanded(flex: 3, child: _buildHeaderText('Note')),
+                          Expanded(flex: 3, child: _buildHeaderText('Bill')),
+                          Expanded(flex: 3, child: _buildHeaderText('Paid')),
                           Expanded(flex: 3, child: _buildHeaderText('Balance')),
                         ],
                       ),
                     ),
 
-                    // Table Body
+                    // Enhanced Table Body with Perfect Alignment
                     Expanded(
                       child: ListView.builder(
                         physics: ClampingScrollPhysics(),
@@ -1025,89 +1124,146 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         itemBuilder: (context, index) {
                           final item = ledgerController.ledgerList[index];
 
-                          // Calculate cumulative balance for this row
+                          // Calculate cumulative balance
                           double cumulativeBalance = 0;
-                          for (var i = 0; i <= index; i++) {
+                          for (int i = 0; i <= index; i++) {
                             final currentItem = ledgerController.ledgerList[i];
                             cumulativeBalance +=
-                                (currentItem.drAmount - currentItem.crAmount);
+                                currentItem.drAmount - currentItem.crAmount;
                           }
 
                           return Container(
                             padding: EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 12),
+                                horizontal: 16,
+                                vertical: 12), // More vertical padding
                             decoration: BoxDecoration(
-                              color: index % 2 == 0
-                                  ? Colors.transparent
-                                  : Colors.white.withOpacity(0.03),
+                              gradient: index % 2 == 0
+                                  ? LinearGradient(
+                                      colors: [
+                                        Colors.transparent,
+                                        Colors.white.withOpacity(0.02)
+                                      ],
+                                      begin: Alignment.centerLeft,
+                                      end: Alignment.centerRight,
+                                    )
+                                  : null,
                               border: Border(
                                 bottom: BorderSide(
-                                  color: Colors.white.withOpacity(0.08),
+                                  color: Colors.white.withOpacity(0.1),
                                   width: 0.5,
                                 ),
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  flex: 2,
-                                  child: _buildDataText(
-                                    _formatDates(item.vdate),
-                                    Colors.white70,
-                                    FontWeight.w500,
+                            child: IntrinsicHeight(
+                              // Makes row height adjust to content
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment
+                                    .start, // Align items to top
+                                children: [
+                                  // Date Column - Fixed width
+                                  Container(
+                                    width: 80,
+                                    alignment: Alignment.topLeft,
+                                    child: _buildDataText(
+                                      _formatDates(item.vdate),
+                                      Colors.white70,
+                                      FontWeight.w500,
+                                    ),
                                   ),
-                                ),
-                                // Expanded(
-                                //   flex: 2,
-                                //   child: _buildDataText(
-                                //     item.vno.isNotEmpty ? item.vno : '-',
-                                //     Colors.white70,
-                                //     FontWeight.normal,
-                                //   ),
-                                // ),
-                                Expanded(
-                                  flex: 3,
-                                  child: _buildDataText(
-                                    item.accountName.isNotEmpty
-                                        ? item.accountName
-                                        : (item.aliasName.isNotEmpty
-                                            ? item.aliasName
-                                            : 'N/A'),
-                                    Colors.white,
-                                    FontWeight.w500,
+
+                                  // Note Column - Expanded to take remaining space
+                                  Expanded(
+                                    flex: 4,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(right: 8),
+                                      child: Text(
+                                        item.accountName.isNotEmpty
+                                            ? item.accountName
+                                            : (item.aliasName.isNotEmpty
+                                                ? item.aliasName
+                                                : 'N/A'),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        maxLines: 2, // Allow text to wrap
+                                        overflow: TextOverflow.visible,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                Expanded(
-                                  flex: 2,
-                                  child: _buildAmountText(
-                                    '৳${item.drAmount.toStringAsFixed(0)}',
-                                    item.drAmount > 0
-                                        ? Color(0xFFFF6B6B)
-                                        : Colors.white,
-                                    item.drAmount > 0,
+
+                                  // Bill Column
+                                  Container(
+                                    width: 70,
+                                    alignment: Alignment.topRight,
+                                    child: _buildAmountText(
+                                      '৳${item.drAmount.toStringAsFixed(0)}',
+                                      item.drAmount > 0
+                                          ? Color(0xFFFF6B6B)
+                                          : Colors.white54,
+                                      item.drAmount > 0,
+                                    ),
                                   ),
-                                ),
-                                Expanded(
-                                  flex: 2,
-                                  child: _buildAmountText(
-                                    '৳${item.crAmount.toStringAsFixed(0)}',
-                                    item.crAmount > 0
-                                        ? Color(0xFF00D2FF)
-                                        : Colors.white,
-                                    item.crAmount > 0,
+
+                                  // Paid Column
+                                  Container(
+                                    width: 70,
+                                    alignment: Alignment.topRight,
+                                    child: _buildAmountText(
+                                      '৳${item.crAmount.toStringAsFixed(0)}',
+                                      item.crAmount > 0
+                                          ? Color(0xFF00D2FF)
+                                          : Colors.white54,
+                                      item.crAmount > 0,
+                                    ),
                                   ),
-                                ),
-                                Expanded(
-                                  flex: 2,
-                                  child: _buildAmountText(
-                                    '৳${cumulativeBalance.toStringAsFixed(0)}',
-                                    cumulativeBalance >= 0
-                                        ? Color(0xFF00D2FF)
-                                        : Color(0xFFFF6B6B),
-                                    true,
+
+                                  // Balance Column - Alternative styles
+                                  Container(
+                                    width: 90,
+                                    alignment: Alignment.topRight,
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: cumulativeBalance >= 0
+                                            ? Color(0xFF00D2FF)
+                                                .withOpacity(0.15)
+                                            : Color(0xFFFF6B6B)
+                                                .withOpacity(0.15),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            cumulativeBalance >= 0 ? '↑' : '↓',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: cumulativeBalance >= 0
+                                                  ? Color(0xFF00D2FF)
+                                                  : Color(0xFFFF6B6B),
+                                            ),
+                                          ),
+                                          Text(
+                                            '৳${cumulativeBalance.abs().toStringAsFixed(0)}',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: cumulativeBalance >= 0
+                                                  ? Color(0xFF00D2FF)
+                                                  : Color(0xFFFF6B6B),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           );
                         },
@@ -1123,7 +1279,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-// Enhanced helper method for summary items
+// Enhanced helper method for summary items with glassmorphism
   Widget _buildSummaryItem({
     required IconData icon,
     required String label,
@@ -1133,15 +1289,33 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return Row(
       children: [
         Container(
-          padding: EdgeInsets.all(8),
+          padding: EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(8),
+            gradient: LinearGradient(
+              colors: [
+                color.withOpacity(0.2),
+                color.withOpacity(0.1),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: color.withOpacity(0.3),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.2),
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
           ),
           child: Icon(
             icon,
             color: color,
-            size: 18,
+            size: 20,
           ),
         ),
         SizedBox(width: 12),
@@ -1156,15 +1330,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   color: Colors.white60,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
                 ),
               ),
-              SizedBox(height: 2),
+              SizedBox(height: 4),
               Text(
                 value,
                 style: TextStyle(
                   color: color,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1175,45 +1351,62 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-// Helper method for table header text
+// Enhanced helper method for table header text with perfect alignment
   Widget _buildHeaderText(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontWeight: FontWeight.bold,
-        fontSize: 13,
-        color: Colors.white,
-        letterSpacing: 0.3,
+    return Container(
+      alignment: Alignment.centerLeft, // Ensures perfect vertical centering
+      child: Text(
+        text,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+          color: Colors.white,
+          letterSpacing: 0.5,
+          shadows: [
+            Shadow(
+              color: Colors.black.withOpacity(0.3),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
       ),
-      textAlign: TextAlign.left,
     );
   }
 
-// Helper method for regular data text
+// Enhanced helper method for regular data text with perfect alignment
   Widget _buildDataText(String text, Color color, FontWeight fontWeight) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 12,
-        color: color,
-        fontWeight: fontWeight,
+    return Container(
+      alignment: Alignment.centerLeft, // Ensures perfect vertical centering
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          color: color,
+          fontWeight: fontWeight,
+          letterSpacing: 0.3,
+        ),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1, // Changed to 1 for better alignment
       ),
-      overflow: TextOverflow.ellipsis,
-      maxLines: 2,
     );
   }
 
-// Helper method for amount text with right alignment
+// Enhanced helper method for amount text with perfect alignment
   Widget _buildAmountText(String text, Color color, bool isBold) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 12,
-        color: color,
-        fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
+    return Container(
+      alignment: Alignment
+          .centerRight, // Ensures perfect vertical centering and right alignment
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          color: color,
+          fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
+          letterSpacing: 0.3,
+        ),
+        overflow: TextOverflow.ellipsis,
       ),
-      textAlign: TextAlign.right,
-      overflow: TextOverflow.ellipsis,
     );
   }
 
@@ -1225,7 +1418,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       itemCount: EventsDetails.length,
       itemBuilder: (BuildContext context, int index) {
         final transaction = EventsDetails[index];
-
         Uint8List? eventPicture = transaction.evenPicture != null
             ? base64Decode(transaction.evenPicture!)
             : null;
