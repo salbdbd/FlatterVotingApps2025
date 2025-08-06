@@ -1019,7 +1019,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     gradient: LinearGradient(
                       colors: [
                         Colors.transparent,
-                        Colors.white.withOpacity(0.3),
+                        Colors.white.withValues(alpha: 0.3),
                         Colors.transparent,
                       ],
                       begin: Alignment.topCenter,
@@ -1229,9 +1229,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       decoration: BoxDecoration(
                                         color: cumulativeBalance >= 0
                                             ? Color(0xFF00D2FF)
-                                                .withOpacity(0.15)
+                                                .withValues(alpha: 0.15)
                                             : Color(0xFFFF6B6B)
-                                                .withOpacity(0.15),
+                                                .withValues(alpha: 0.15),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Column(
@@ -1248,16 +1248,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                   : Color(0xFFFF6B6B),
                                             ),
                                           ),
-                                          Text(
-                                            '৳${cumulativeBalance.abs().toStringAsFixed(0)}',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
                                               color: cumulativeBalance >= 0
                                                   ? Color(0xFF00D2FF)
-                                                  : Color(0xFFFF6B6B),
+                                                      .withOpacity(0.2)
+                                                  : Color(0xFFFF6B6B)
+                                                      .withOpacity(0.2),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
-                                          ),
+                                            child: Text(
+                                              '৳${cumulativeBalance.toStringAsFixed(0)}',
+                                              style: TextStyle(
+                                                color: cumulativeBalance >= 0
+                                                    ? Color(0xFF00D2FF)
+                                                    : Color(0xFFFF6B6B),
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          )
                                         ],
                                       ),
                                     ),
@@ -1413,7 +1426,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // Keep all your existing methods
   Widget _buildEventsTab(double containerHeight) {
     return ListView.builder(
-      padding: EdgeInsets.only(top: 16, bottom: 100),
+      padding: EdgeInsets.only(top: 5, bottom: 100),
       physics: BouncingScrollPhysics(),
       itemCount: EventsDetails.length,
       itemBuilder: (BuildContext context, int index) {
@@ -1445,8 +1458,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
             ),
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
               child: Container(
+                padding: EdgeInsets.all(10),
                 height: containerHeight,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -1552,20 +1566,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xFF2D3748).withOpacity(0.7),
-                    Color(0xFF1A202C).withOpacity(0.9),
+                    Color(0xFF2D3748).withValues(alpha: 0.7),
+                    Color(0xFF1A202C).withValues(alpha: 0.9),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Color(0xFF6C5CE7).withOpacity(0.3),
+                  color: Color(0xFF6C5CE7).withValues(alpha: 0.3),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: Offset(0, 6),
                     spreadRadius: 1,
@@ -1596,7 +1610,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             borderRadius: BorderRadius.circular(28),
                             boxShadow: [
                               BoxShadow(
-                                color: Color(0xFF6C5CE7).withOpacity(0.4),
+                                color: Color(0xFF6C5CE7).withValues(alpha: 0.4),
                                 blurRadius: 8,
                                 offset: Offset(0, 4),
                               ),
@@ -1641,7 +1655,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   Container(
                                     padding: EdgeInsets.all(4),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.1),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Icon(Icons.phone,
@@ -1667,7 +1682,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   Container(
                                     padding: EdgeInsets.all(4),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.1),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Icon(Icons.email,
@@ -1700,7 +1716,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    Color(0xFF6C5CE7).withOpacity(0.8),
+                                    Color(0xFF6C5CE7).withValues(alpha: 0.8),
                                     Color(0xFF6C5CE7).withOpacity(0.6),
                                   ],
                                 ),
@@ -1751,14 +1767,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    Color(0xFFA29BFE).withOpacity(0.8),
-                                    Color(0xFFA29BFE).withOpacity(0.6),
+                                    Color(0xFFA29BFE).withValues(alpha: 0.8),
+                                    Color(0xFFA29BFE).withValues(alpha: 0.6),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(22),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Color(0xFFA29BFE).withOpacity(0.3),
+                                    color: Color(0xFFA29BFE)
+                                        .withValues(alpha: 0.3),
                                     blurRadius: 6,
                                     offset: Offset(0, 3),
                                   ),
@@ -1822,8 +1839,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xFF2D3748).withOpacity(0.6),
-                  Color(0xFF1A202C).withOpacity(0.8),
+                  Color(0xFF2D3748).withValues(alpha: 0.6),
+                  Color(0xFF1A202C).withValues(alpha: 0.8),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -1832,12 +1849,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               border: Border.all(
                 color: alert['isRead']
                     ? Colors.transparent
-                    : Color(0xFF6C5CE7).withOpacity(0.4),
+                    : Color(0xFF6C5CE7).withValues(alpha: 0.4),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.25),
+                  color: Colors.black.withValues(alpha: 0.25),
                   blurRadius: 8,
                   offset: Offset(0, 4),
                 ),

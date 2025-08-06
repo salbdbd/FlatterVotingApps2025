@@ -1,3 +1,4 @@
+import 'package:association/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -16,7 +17,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
-  final String apiUrl = 'http://103.125.253.59:2026/api/v1/ChangePassword';
+  final String apiUrl = '${BaseUrl.baseUrl}/api/v1/ChangePassword';
 
   bool _isCurrentPasswordVisible = false;
   bool _isNewPasswordVisible = false;
