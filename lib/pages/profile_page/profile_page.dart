@@ -183,6 +183,7 @@ class _ProfilePageState extends State<ProfilePage>
 
                           // Action Buttons
                           _buildActionButtons(),
+                          buildActionButtons(),
                         ],
                       ),
                     ),
@@ -548,6 +549,35 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildActionButtons() {
+    return Column(
+      children: [
+        _buildEnhancedActionTile(
+          title: 'Change Password',
+          subtitle: 'Update your account security',
+          icon: Icons.lock_reset,
+          gradientColors: [Colors.blue, Colors.indigo],
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ChangePasswordPage(),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildEnhancedActionTile(
+          title: 'Logout',
+          subtitle: 'Sign out from your account',
+          icon: Icons.logout,
+          gradientColors: [Colors.red, Colors.deepOrange],
+          onTap: _logout,
+        ),
+      ],
+    );
+  }
+
+  Widget buildActionButtons() {
     return Column(
       children: [
         _buildEnhancedActionTile(
