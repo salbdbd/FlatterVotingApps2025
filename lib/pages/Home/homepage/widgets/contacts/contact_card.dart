@@ -27,6 +27,7 @@ class _ContactsSectionState extends State<ContactsSection> {
           child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
             // physics: const NeverScrollableScrollPhysics(),
+            scrollDirection: Axis.vertical,
             itemCount: controller.memberList.length,
             itemBuilder: (context, index) => ContactCard(
               contact: {

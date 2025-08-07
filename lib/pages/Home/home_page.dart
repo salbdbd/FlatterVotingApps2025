@@ -49,6 +49,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late final Animation<double> _fadeAnimation;
   late final Animation<Offset> _slideAnimation;
   late final LedgerController _ledgerController;
+  late final ScrollController _nestedScrollController; // Add this
 
   int _currentPage = 0;
   bool _isLoading = false;
@@ -70,6 +71,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
     _pageController = PageController()..addListener(_onPageChanged);
     _tabController = TabController(length: 4, vsync: this);
+    _nestedScrollController =
+        ScrollController(); // Initialize scroll controller
     _ledgerController = Get.put(
       LedgerController(
         compId: widget.userDetails?.selectedCompanyData.compId ?? 0,
@@ -215,6 +218,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _tabController.dispose();
     _fadeController.dispose();
     _slideController.dispose();
+    _nestedScrollController.dispose(); // Dispose scroll controller
     super.dispose();
   }
 
@@ -270,7 +274,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ),
       ),
       child: NestedScrollView(
-        physics: const NeverScrollableScrollPhysics(),
+        controller: _nestedScrollController, // Add controller
+        physics:
+            const ClampingScrollPhysics(), // Change from NeverScrollableScrollPhysics
+        floatHeaderSlivers: true, // Add this for better floating behavior
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           _buildSliverAppBar(),
           _buildHeaderContent(),
@@ -286,6 +293,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       expandedHeight: 60.0,
       floating: true,
       pinned: false,
+      snap: true, // Add snap for better UX
       backgroundColor: Colors.transparent,
       elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
@@ -355,6 +363,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget _buildTabBarHeader() {
     return SliverPersistentHeader(
       pinned: true,
+      floating: true, // Add floating for better scroll behavior
       delegate: _SliverAppBarDelegate(
         TabBar(
           controller: _tabController,
@@ -374,6 +383,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             Tab(icon: Icon(Icons.notifications, size: 14), text: 'Alerts'),
           ],
         ),
+        topPadding: 40.0, // Add top padding to keep distance from top
       ),
     );
   }
@@ -381,6 +391,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget _buildTabBarView() {
     return TabBarView(
       controller: _tabController,
+      physics:
+          const NeverScrollableScrollPhysics(), // Disable TabBarView scrolling to prevent conflicts
       children: [
         _buildEventsTab(),
         _buildAccountsTab(),
@@ -391,11 +403,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildEventsTab() {
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 5, bottom: 100),
-      physics: const BouncingScrollPhysics(),
-      itemCount: _eventsDetails.length,
-      itemBuilder: (context, index) => _buildEventCard(index),
+    return CustomScrollView(
+      // Replace ListView.builder with CustomScrollView for better nested scrolling
+      physics:
+          const ClampingScrollPhysics(), // Change from BouncingScrollPhysics
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.only(top: 5, bottom: 100),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => _buildEventCard(index),
+              childCount: _eventsDetails.length,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -805,23 +827,32 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
 class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   final TabBar _tabBar;
+  final double topPadding;
 
-  _SliverAppBarDelegate(this._tabBar);
-
-  @override
-  double get minExtent => _tabBar.preferredSize.height;
+  _SliverAppBarDelegate(this._tabBar, {this.topPadding = 0.0});
 
   @override
-  double get maxExtent => _tabBar.preferredSize.height;
+  double get minExtent => _tabBar.preferredSize.height + topPadding;
+
+  @override
+  double get maxExtent => _tabBar.preferredSize.height + topPadding;
 
   @override
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(color: Colors.transparent, child: _tabBar);
+    return Container(
+      color: AppConstants.darkBlue
+          .withOpacity(0.95), // Add background color for better visibility
+      child: Padding(
+        padding: EdgeInsets.only(top: topPadding), // Add top padding
+        child: _tabBar,
+      ),
+    );
   }
 
   @override
-  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) => false;
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) =>
+      oldDelegate.topPadding != topPadding;
 }
 
 extension WidgetExtensions on Widget {
