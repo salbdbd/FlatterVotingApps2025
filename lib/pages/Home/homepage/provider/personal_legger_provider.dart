@@ -1,5 +1,4 @@
 // import 'dart:convert';
-import 'dart:developer';
 
 import 'package:association/models/loger_item_model.dart';
 import 'package:association/pages/dashboard/dashboard_page.dart';

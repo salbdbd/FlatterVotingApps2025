@@ -287,7 +287,6 @@ class _ProfilePageState extends State<ProfilePage>
           ),
 
           const SizedBox(height: 12),
-
           // User role/status indicator
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

@@ -1,3 +1,4 @@
+import 'package:association/pages/Home/homepage/widgets/contacts/controller/bindings.dart';
 import 'package:association/pages/Home/pdf_viewer_screen.dart';
 import 'package:association/pages/dashboard.dart';
 import 'package:association/pages/dashboard/dashboard_page.dart';
@@ -25,9 +26,9 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      home:
-          // DashBoard()
-          SplashScreen(),
+      initialBinding: MemberBinding(),
+      //
+      home: SplashScreen(),
     );
   }
 }
