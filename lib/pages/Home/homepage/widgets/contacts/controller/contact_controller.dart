@@ -1,4 +1,5 @@
 import 'package:association/pages/Home/homepage/widgets/contacts/model/contacts_model.dart';
+import 'package:association/services/api_service.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -20,8 +21,7 @@ class MemberController extends GetxController {
       errorMessage('');
 
       final response = await http.get(
-        Uri.parse(
-            'http://103.125.253.59:2004/api/v1/GetLEDGERMemberShortList/202'),
+        Uri.parse('${BaseUrl.baseUrl}/api/v1/GetLEDGERMemberShortList/202'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

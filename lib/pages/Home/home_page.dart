@@ -1,11 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
-import 'dart:typed_data';
-
-import 'package:association/models/loger_item_model.dart';
 import 'package:association/pages/Home/components/event_card.dart';
-import 'package:association/pages/Home/components/loan_pdf/pdf_page.dart';
 import 'package:association/pages/Home/homepage/widgets/accounts/accounts_content_view.dart';
 import 'package:association/pages/Home/homepage/widgets/accounts/accounts_loading_view.dart';
 import 'package:association/pages/Home/homepage/widgets/accounts/empty_accounts_view.dart';
@@ -70,7 +66,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       text: widget.userDetails?.selectedCompanyData.name ?? 'Member',
     );
     _pageController = PageController()..addListener(_onPageChanged);
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _nestedScrollController =
         ScrollController(); // Initialize scroll controller
     _ledgerController = Get.put(
@@ -111,8 +107,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _fetchMemberAccountTransactions(),
     ]);
 
+    if (!mounted) return;
+
     _loadingStates = List<bool>.filled(_eventsDetails.length, false);
-    _fadeController.forward();
+
+    if (mounted) {
+      _fadeController.forward();
+    }
 
     Future.delayed(const Duration(milliseconds: 200), () {
       if (mounted) _slideController.forward();
@@ -376,10 +377,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
           tabs: const [
             Tab(icon: Icon(Icons.event, size: 14), text: 'Events'),
-            Tab(
-                icon: Icon(Icons.account_balance_wallet, size: 14),
-                text: 'Accounts'),
-            Tab(icon: Icon(Icons.contacts, size: 14), text: 'Contacts'),
+            // Tab(
+            //     icon: Icon(Icons.account_balance_wallet, size: 14),
+            //     text: 'Accounts'),
+            Tab(icon: Icon(Icons.contacts, size: 14), text: 'Accounts'),
             Tab(icon: Icon(Icons.notifications, size: 14), text: 'Alerts'),
           ],
         ),
@@ -396,7 +397,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       children: [
         _buildEventsTab(),
         _buildAccountsTab(),
-        const ContactsSection(),
+        // const ContactsSection(),
         const AlertsSection(),
       ],
     );

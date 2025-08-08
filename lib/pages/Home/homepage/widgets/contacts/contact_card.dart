@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:association/pages/Home/homepage/widgets/utilis/constants.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:whatsapp_unilink/whatsapp_unilink.dart';
 
 class ContactsSection extends StatefulWidget {
   const ContactsSection({super.key});
@@ -13,71 +12,505 @@ class ContactsSection extends StatefulWidget {
 }
 
 class _ContactsSectionState extends State<ContactsSection>
-    with AutomaticKeepAliveClientMixin {
-  // Keep the widget alive to prevent rebuilds when switching tabs
+    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  // Search functionality
+  TextEditingController searchController = TextEditingController();
+  String searchQuery = '';
+  bool isSearching = false;
+
   @override
   bool get wantKeepAlive => true;
 
   @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.5),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.elasticOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    searchController.dispose();
+    super.dispose();
+  }
+
+  // Filter members based on search query
+  List<dynamic> _filterMembers(List<dynamic> members) {
+    if (searchQuery.isEmpty) return members;
+
+    return members.where((member) {
+      final memberCode = member.memberCode?.toString().toLowerCase() ?? '';
+      final memberName = member.memberName?.toString().toLowerCase() ?? '';
+      final mobileNo = member.mobileNo?.toString().toLowerCase() ?? '';
+      final detailsCaption =
+          member.detailsCaption?.toString().toLowerCase() ?? '';
+      final query = searchQuery.toLowerCase();
+
+      return memberCode.contains(query) ||
+          memberName.contains(query) ||
+          mobileNo.contains(query) ||
+          detailsCaption.contains(query);
+    }).toList();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    super.build(context);
 
     final MemberController controller = Get.find<MemberController>();
 
-    return Obx(() {
-      if (controller.isLoading.value) {
-        return const Center(
-          child: CircularProgressIndicator(
-            valueColor:
-                AlwaysStoppedAnimation<Color>(AppConstants.primaryPurple),
+    return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0B),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF0A0A0B),
+              Color(0xFF1A1A1F),
+              Color(0xFF0F0F14),
+            ],
           ),
-        );
-      } else if (controller.errorMessage.value.isNotEmpty) {
-        return Center(
-          child: Text(
-            controller.errorMessage.value,
-            style: const TextStyle(color: Colors.white70),
+        ),
+        child: SafeArea(
+          child: Obx(() {
+            if (controller.isLoading.value) {
+              return _buildLoadingState();
+            } else if (controller.errorMessage.value.isNotEmpty) {
+              return _buildErrorState(controller.errorMessage.value);
+            } else {
+              // Start animation when data is loaded
+              if (!_animationController.isAnimating &&
+                  !_animationController.isCompleted) {
+                _animationController.forward();
+              }
+              return _buildMembersList(controller);
+            }
+          }),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.orange.withOpacity(0.3),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: const CircularProgressIndicator(
+              color: Colors.orange,
+              strokeWidth: 3,
+            ),
           ),
-        );
-      } else {
-        return Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return ListView.builder(
-                padding: EdgeInsets.fromLTRB(
-                    16,
-                    16,
-                    16,
-                    MediaQuery.of(context).padding.bottom +
-                        kBottomNavigationBarHeight +
-                        16),
-                physics: const BouncingScrollPhysics(),
-                scrollDirection: Axis.vertical,
-                itemCount: controller.memberList.length,
-                // Remove fixed itemExtent for responsive height
-                addAutomaticKeepAlives: false,
-                addRepaintBoundaries: true,
-                cacheExtent: 200,
-                itemBuilder: (context, index) {
-                  final member = controller.memberList[index];
-                  return OptimizedContactCard(
-                    key: ValueKey('contact_${member.brandId}_$index'),
-                    contact: ContactModel(
-                      name: member.memberName,
-                      role: member.detailsCaption,
-                      phone: member.mobileNo,
-                      email:
-                          '${member.memberCode.replaceAll('/', '_')}@association.com',
-                      brandId: member.brandId,
+          const SizedBox(height: 20),
+          const Text(
+            'Loading members...',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String errorMessage) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.red.withOpacity(0.1),
+              Colors.deepOrange.withOpacity(0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.red.withOpacity(0.3),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.red.withOpacity(0.2),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: const Icon(
+                Icons.error_outline,
+                color: Colors.red,
+                size: 40,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Oops! Something went wrong',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              errorMessage,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMembersList(MemberController controller) {
+    final filteredMembers = _filterMembers(controller.memberList);
+
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Column(
+          children: [
+            // Header Section with Search
+            _buildHeaderWithSearch(
+                controller.memberList.length, filteredMembers.length),
+
+            // Members List
+            Expanded(
+              child: filteredMembers.isEmpty
+                  ? _buildNoResultsState()
+                  : ListView.builder(
+                      padding: EdgeInsets.fromLTRB(
+                        20,
+                        16,
+                        20,
+                        MediaQuery.of(context).padding.bottom +
+                            kBottomNavigationBarHeight +
+                            16,
+                      ),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: filteredMembers.length,
+                      addAutomaticKeepAlives: false,
+                      addRepaintBoundaries: true,
+                      cacheExtent: 200,
+                      itemBuilder: (context, index) {
+                        final member = filteredMembers[index];
+                        return CompactContactCard(
+                          key: ValueKey('contact_${member.brandId}_$index'),
+                          contact: ContactModel(
+                            name: member.memberName,
+                            role: member.detailsCaption,
+                            phone: member.mobileNo,
+                            email:
+                                '${member.memberCode.replaceAll('/', '_')}@association.com',
+                            brandId: member.brandId,
+                            // memberCode: member.memberCode,
+                          ),
+                          index: index,
+                        );
+                      },
                     ),
-                  );
-                },
-              );
-            },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderWithSearch(int totalCount, int filteredCount) {
+    return Container(
+      margin: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          // Header info
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.orange.withOpacity(0.1),
+                  Colors.deepOrange.withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.orange.withOpacity(0.3),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.orange.withOpacity(0.1),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.orange, Colors.deepOrange],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.orange.withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.groups,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Association Members',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        searchQuery.isEmpty
+                            ? '$totalCount members found'
+                            : '$filteredCount of $totalCount members',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      isSearching = !isSearching;
+                      if (!isSearching) {
+                        searchController.clear();
+                        searchQuery = '';
+                      }
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isSearching
+                          ? Colors.orange.withOpacity(0.3)
+                          : Colors.orange.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      isSearching ? Icons.close : Icons.search,
+                      color: Colors.orange,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        );
-      }
-    });
+
+          // Search bar
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            height: isSearching ? 60 : 0,
+            child: isSearching
+                ? Container(
+                    margin: const EdgeInsets.only(top: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.1),
+                      ),
+                    ),
+                    child: TextField(
+                      controller: searchController,
+                      autofocus: true,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                      onChanged: (value) {
+                        setState(() {
+                          searchQuery = value;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Search by name, code, phone, or role...',
+                        hintStyle: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 14,
+                        ),
+                        prefixIcon: Container(
+                          margin: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.search,
+                            color: Colors.orange,
+                            size: 18,
+                          ),
+                        ),
+                        suffixIcon: searchQuery.isNotEmpty
+                            ? GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    searchController.clear();
+                                    searchQuery = '';
+                                  });
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.all(8),
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.clear,
+                                    color: Colors.red,
+                                    size: 18,
+                                  ),
+                                ),
+                              )
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoResultsState() {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.blue.withOpacity(0.1),
+              Colors.cyan.withOpacity(0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.blue.withOpacity(0.3),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: const Icon(
+                Icons.search_off,
+                color: Colors.blue,
+                size: 40,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'No members found',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Try adjusting your search terms\n"$searchQuery"',
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -87,290 +520,226 @@ class ContactModel {
   final String role;
   final String phone;
   final String email;
-  final int brandId;
+  final int? brandId;
+  final String? memberCode;
 
   const ContactModel({
     required this.name,
     required this.role,
     required this.phone,
     required this.email,
-    required this.brandId,
+    this.brandId,
+    this.memberCode,
   });
 }
 
-// Optimized ContactCard with performance improvements
-class OptimizedContactCard extends StatelessWidget {
+// Compact ContactCard for better space efficiency
+class CompactContactCard extends StatelessWidget {
   final ContactModel contact;
+  final int index;
 
-  const OptimizedContactCard({
+  const CompactContactCard({
     required this.contact,
+    required this.index,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final screenWidth = constraints.maxWidth;
-            final isSmallScreen = screenWidth < 360;
-            final isMediumScreen = screenWidth < 600;
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: _buildCardDecoration(),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            splashColor: Colors.orange.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _showMemberDetails(context),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Compact avatar
+                  _buildCompactAvatar(),
+                  const SizedBox(width: 12),
 
-            return Container(
-              constraints: const BoxConstraints(
-                minHeight: 120,
-                maxHeight: double.infinity,
-              ),
-              decoration: _buildCardDecoration(),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  splashColor: AppConstants.primaryPurple.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(16),
-                  onTap: null,
-                  child: Padding(
-                    padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
-                    child: _buildResponsiveLayout(
-                        context, isSmallScreen, isMediumScreen),
+                  // Member info - takes most space
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Name
+                        Text(
+                          contact.name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+
+                        // Role and member code in one line
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                contact.role,
+                                style: TextStyle(
+                                  color: Colors.orange.withOpacity(0.9),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            // Container(
+                            //   padding: const EdgeInsets.symmetric(
+                            //     horizontal: 6,
+                            //     vertical: 2,
+                            //   ),
+                            //   decoration: BoxDecoration(
+                            //     color: Colors.blue.withOpacity(0.2),
+                            //     borderRadius: BorderRadius.circular(6),
+                            //   ),
+                            //   child: Text(
+                            //     contact.memberCode ?? '',
+                            //     style: const TextStyle(
+                            //       color: Colors.blue,
+                            //       fontSize: 10,
+                            //       fontWeight: FontWeight.w600,
+                            //     ),
+                            //   ),
+                            // ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+
+                        // Phone number
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.phone,
+                              color: Colors.green,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                contact.phone,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+
+                  // Compact action buttons
+                  _buildCompactActionButtons(context),
+                ],
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildResponsiveLayout(
-      BuildContext context, bool isSmallScreen, bool isMediumScreen) {
-    if (isSmallScreen) {
-      // Stack layout for very small screens
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _buildOptimizedAvatar(isSmall: true),
-              const SizedBox(width: 12),
-              Expanded(child: _buildContactInfo(isCompact: true)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _buildHorizontalActionButtons(context),
-        ],
-      );
-    } else {
-      // Standard row layout for larger screens
-      return IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildOptimizedAvatar(),
-            SizedBox(width: isMediumScreen ? 12 : 16),
-            Expanded(child: _buildContactInfo()),
-            _buildActionButtons(context, isCompact: isMediumScreen),
-          ],
-        ),
-      );
-    }
-  }
-
-  // Pre-computed decoration to avoid recreating on each build
   BoxDecoration _buildCardDecoration() {
     return BoxDecoration(
-      gradient: LinearGradient(
-        colors: [
-          AppConstants.cardBackground.withOpacity(0.7),
-          AppConstants.cardBackgroundSecondary.withOpacity(0.9),
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
+      color: Colors.white.withOpacity(0.02),
       borderRadius: BorderRadius.circular(16),
       border: Border.all(
-        color: AppConstants.primaryPurple.withOpacity(0.3),
-        width: 1.5,
+        color: Colors.white.withOpacity(0.1),
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.3),
-          blurRadius: 12,
-          offset: const Offset(0, 6),
-          spreadRadius: 1,
+          color: Colors.black.withOpacity(0.2),
+          blurRadius: 8,
+          offset: const Offset(0, 4),
         ),
       ],
     );
   }
 
-  Widget _buildOptimizedAvatar({bool isSmall = false}) {
-    final size = isSmall ? 48.0 : 56.0;
-    final iconSize = isSmall ? 24.0 : 28.0;
-
+  Widget _buildCompactAvatar() {
     return Container(
-      width: size,
-      height: size,
+      width: 46,
+      height: 46,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppConstants.primaryPurple, AppConstants.secondaryPurple],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [Colors.orange, Colors.deepOrange],
         ),
-        borderRadius: BorderRadius.circular(size / 2),
         boxShadow: [
           BoxShadow(
-            color: AppConstants.primaryPurple.withOpacity(0.4),
+            color: Colors.orange.withOpacity(0.3),
             blurRadius: 8,
-            offset: const Offset(0, 4),
+            spreadRadius: 1,
           ),
         ],
       ),
-      child: Icon(
-        Icons.person,
-        color: Colors.white,
-        size: iconSize,
+      child: Container(
+        margin: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white,
+        ),
+        child: const Icon(
+          Icons.person,
+          size: 22,
+          color: Colors.grey,
+        ),
       ),
     );
   }
 
-  Widget _buildContactInfo({bool isCompact = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          contact.name,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: isCompact ? 16 : 18,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          contact.role,
-          style: TextStyle(
-            color: AppConstants.primaryPurple,
-            fontSize: isCompact ? 12 : 14,
-            fontWeight: FontWeight.w600,
-          ),
-          maxLines: isCompact ? 1 : 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 8),
-        _buildContactDetail(Icons.phone, contact.phone, isCompact: isCompact),
-        const SizedBox(height: 6),
-        _buildContactDetail(Icons.email, contact.email, isCompact: isCompact),
-      ],
-    );
-  }
-
-  Widget _buildContactDetail(IconData icon, String text,
-      {bool isCompact = false}) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Icon(icon, color: Colors.white70, size: isCompact ? 12 : 14),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: isCompact ? 11 : 13,
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButtons(BuildContext context, {bool isCompact = false}) {
-    final buttonSize = isCompact ? 40.0 : 44.0;
-    final iconSize = isCompact ? 18.0 : 20.0;
-
+  Widget _buildCompactActionButtons(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildActionButton(
-          Icon(Icons.phone, color: Colors.white, size: iconSize),
-          AppConstants.primaryPurple,
+        _buildCompactActionButton(
+          Icons.phone,
+          Colors.green,
           () => _makePhoneCall(contact.phone, context),
-          size: buttonSize,
         ),
-        const SizedBox(height: 8),
-        _buildActionButton(
-          Image.asset(
-            'assets/Images/whatsapp.png',
-            width: iconSize,
-            height: iconSize,
-            cacheWidth: (iconSize * 2).toInt(),
-            cacheHeight: (iconSize * 2).toInt(),
-          ),
+        const SizedBox(height: 6),
+        _buildCompactActionButton(
+          null,
           Colors.green.shade600,
           () => _openWhatsAppChat(context, contact.phone),
-          size: buttonSize,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHorizontalActionButtons(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        Expanded(
-          child: _buildHorizontalActionButton(
-            Icons.phone,
-            'Call',
-            AppConstants.primaryPurple,
-            () => _makePhoneCall(contact.phone, context),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildHorizontalActionButton(
-            null,
-            'WhatsApp',
-            Colors.green.shade600,
-            () => _openWhatsAppChat(context, contact.phone),
-            customIcon: Image.asset(
-              'assets/Images/whatsapp.png',
-              width: 18,
-              height: 18,
-              cacheWidth: 36,
-              cacheHeight: 36,
-            ),
+          customIcon: Image.asset(
+            'assets/Images/whatsapp.png',
+            width: 16,
+            height: 16,
+            cacheWidth: 32,
+            cacheHeight: 32,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildHorizontalActionButton(
+  Widget _buildCompactActionButton(
     IconData? icon,
-    String label,
     Color color,
     VoidCallback onTap, {
     Widget? customIcon,
   }) {
     return Container(
-      height: 36,
+      width: 34,
+      height: 34,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -378,7 +747,7 @@ class OptimizedContactCard extends StatelessWidget {
             color.withOpacity(0.6),
           ],
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
             color: color.withOpacity(0.3),
@@ -390,58 +759,239 @@ class OptimizedContactCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(8),
           onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                customIcon ?? Icon(icon, color: Colors.white, size: 16),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
+          child: Center(
+            child: customIcon ?? Icon(icon, color: Colors.white, size: 16),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildActionButton(Widget widget, Color color, VoidCallback onTap,
-      {double size = 44.0}) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            color.withOpacity(0.8),
-            color.withOpacity(0.6),
+  void _showMemberDetails(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF0A0A0B),
+              Color(0xFF1A1A1F),
+            ],
+          ),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+          border: Border.all(
+            color: Colors.orange.withOpacity(0.3),
+          ),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 50,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.orange,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Member details
+            Row(
+              children: [
+                _buildCompactAvatar(),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        contact.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          contact.role,
+                          style: const TextStyle(
+                            color: Colors.orange,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Contact details
+            // _buildDetailRow(
+            //     'Member Code', contact.memberCode ?? '', Icons.badge),
+            const SizedBox(height: 12),
+            _buildDetailRow('Phone Number', contact.phone, Icons.phone),
+            const SizedBox(height: 12),
+            // _buildDetailRow('Email Address', contact.email, Icons.email),
+            // const SizedBox(height: 24),
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: _buildModalActionButton(
+                    title: 'Call Now',
+                    icon: Icons.phone,
+                    color: Colors.green,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _makePhoneCall(contact.phone, context);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildModalActionButton(
+                    title: 'WhatsApp',
+                    customIcon: Image.asset(
+                      'assets/Images/whatsapp.png',
+                      width: 20,
+                      height: 20,
+                    ),
+                    color: Colors.green.shade600,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _openWhatsAppChat(context, contact.phone);
+                    },
+                  ),
+                ),
+              ],
+            ),
+
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
           ],
         ),
-        borderRadius: BorderRadius.circular(size / 2),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.3),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: Colors.orange,
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(size / 2),
-          onTap: onTap,
-          child: Center(child: widget),
+    );
+  }
+
+  Widget _buildModalActionButton({
+    required String title,
+    IconData? icon,
+    Widget? customIcon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              color.withOpacity(0.8),
+              color.withOpacity(0.6),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            customIcon ?? Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -449,22 +999,29 @@ class OptimizedContactCard extends StatelessWidget {
 
   void _showActionSnackBar(
       BuildContext context, String message, IconData icon) {
-    if (!context.mounted) return; // Check if context is still valid
+    if (!context.mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            Icon(icon, color: Colors.white, size: 20),
-            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Icon(icon, color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: 12),
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: AppConstants.primaryPurple,
+        backgroundColor: Colors.orange,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 2), // Shorter duration
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -497,11 +1054,9 @@ class OptimizedContactCard extends StatelessWidget {
 
   Future<void> _openWhatsAppChat(
       BuildContext context, String phoneNumber) async {
-    // Clean the phone number by removing all non-digit characters except +
     final cleanedNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
 
     try {
-      // Create proper WhatsApp URL
       final uri = Uri.parse('https://wa.me/88$cleanedNumber');
 
       if (await canLaunchUrl(uri)) {

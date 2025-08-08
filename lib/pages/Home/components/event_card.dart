@@ -17,6 +17,7 @@ class CustomEventCard extends StatefulWidget {
   final String? elevatedText;
   final List<bool> isLoading;
   final int index;
+
   const CustomEventCard({
     Key? key,
     required this.index,
@@ -41,10 +42,15 @@ class _CustomEventCardState extends State<CustomEventCard> {
   int position = 0;
   List<bool> isLoading = [];
 
+  // Safe method to check if current index is loading
+  bool get isCurrentItemLoading {
+    return widget.index < widget.isLoading.length &&
+        widget.isLoading[widget.index];
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      // scrollDirection: Axis.vertical,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -65,11 +71,6 @@ class _CustomEventCardState extends State<CustomEventCard> {
                       height: 200.0,
                       enlargeCenterPage: false,
                       autoPlay: false,
-                      // aspectRatio: 16 / 9,
-                      // autoPlayCurve: Curves.fastOutSlowIn,
-                      // enableInfiniteScroll: true,
-                      // autoPlayAnimationDuration: Duration(milliseconds: 800),
-                      //viewportFraction: 0.8,
                       onPageChanged: (index, _) {
                         setState(() {
                           position = index;
@@ -117,32 +118,33 @@ class _CustomEventCardState extends State<CustomEventCard> {
             ),
           ),
           Text(
-            widget.eventDate!,
+            widget.eventDate ?? '',
             style: const TextStyle(
                 fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
           Text(
-            widget.eventName!,
+            widget.eventName ?? '',
             style: const TextStyle(
                 fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
             overflow: TextOverflow.ellipsis,
             maxLines: 2,
           ),
           Text(
-            widget.eventDetails!,
+            widget.eventDetails ?? '',
             style: const TextStyle(fontSize: 16, color: Colors.white),
             overflow: TextOverflow.ellipsis,
             maxLines: 2,
           ),
           Text(
-            widget.eventPrice!,
+            widget.eventPrice ?? '',
             style: const TextStyle(
                 fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
             overflow: TextOverflow.ellipsis,
           ),
-          widget.isLoading[widget.index]
+          // Fixed the bounds checking here
+          isCurrentItemLoading
               ? Center(
                   child: CircularProgressIndicator(
                     color: Colors.white,

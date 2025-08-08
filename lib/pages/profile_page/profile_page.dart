@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:association/pages/Home/homepage/widgets/contacts/contact_card.dart';
 import 'package:association/pages/indexing_page/indexing_page.dart';
 import 'package:association/pages/profile_page/change_password/change_password.dart';
 import 'package:http/http.dart' as http;
@@ -11,6 +12,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/api_service.dart';
 import '../Login_Or_Signup/login_page.dart';
 import 'components/custom_text_field_for_profile.dart';
+// Import your member list page here
+// import 'member_list/member_list_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final UserDetails? userDetails;
@@ -223,8 +226,6 @@ class _ProfilePageState extends State<ProfilePage>
         children: [
           // Profile Avatar with glow effect
           Container(
-            // width: 140,
-            // height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
@@ -249,12 +250,12 @@ class _ProfilePageState extends State<ProfilePage>
                     ? Image.memory(
                         base64Decode(imageUrl!),
                         fit: BoxFit.contain,
-                        width: 100, // Reduced width
-                        height: 100, // Reduced height
+                        width: 100,
+                        height: 100,
                       )
                     : const Icon(
                         Icons.person,
-                        size: 60, // Reduced icon size
+                        size: 60,
                         color: Colors.grey,
                       ),
               ),
@@ -272,10 +273,9 @@ class _ProfilePageState extends State<ProfilePage>
                 color: Colors.orange.withOpacity(0.3),
               ),
             ),
-            //company name
             child: Text(
+              maxLines: 2,
               userNameController.text,
-              // widget.userDetails?.userData.companyName ?? 'Company Name',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -551,6 +551,21 @@ class _ProfilePageState extends State<ProfilePage>
     return Column(
       children: [
         _buildEnhancedActionTile(
+          title: 'Member List',
+          subtitle: 'View all association members',
+          icon: Icons.groups,
+          gradientColors: [Colors.teal, Colors.cyan],
+          onTap: () {
+            // Navigate to member list page
+            // Replace this with your actual member list page navigation
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ContactsSection()),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildEnhancedActionTile(
           title: 'Change Password',
           subtitle: 'Update your account security',
           icon: Icons.lock_reset,
@@ -718,5 +733,31 @@ class _ProfilePageState extends State<ProfilePage>
 
       Get.offAll(() => LoginPage());
     }
+  }
+}
+
+// Placeholder for MemberListPage - replace with your actual implementation
+class MemberListPage extends StatelessWidget {
+  final UserDetails? userDetails;
+
+  const MemberListPage({Key? key, this.userDetails}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Member List'),
+        backgroundColor: const Color(0xFF0A0A0B),
+        foregroundColor: Colors.white,
+      ),
+      backgroundColor: const Color(0xFF0A0A0B),
+      body: const Center(
+        child: Text(
+          'Member List Page\n(Replace with your implementation)',
+          style: TextStyle(color: Colors.white, fontSize: 18),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
   }
 }
