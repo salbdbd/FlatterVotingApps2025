@@ -15,7 +15,6 @@ class AppLocalizations {
       _AppLocalizationsDelegate();
 
   Map<String, String> _localizedStrings = {};
-
   Future<void> load() async {
     try {
       String jsonString = await rootBundle
