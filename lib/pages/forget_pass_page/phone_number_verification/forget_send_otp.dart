@@ -295,5 +295,5 @@ class _TypingTextAnimationState extends State<TypingTextAnimation>
     super.dispose();
   }
 
-  final String text = "Please kindly send Verification code your phone number";
+  final String text = "Please enter your phone number to get OTP";
 }

@@ -790,7 +790,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       };
 
       final uri = Uri.http(
-          '103.125.253.59:2003', '/api/erp/commercialRpt/', parameters);
+          '${BaseUrl.baseUrl}', '/api/erp/commercialRpt/', parameters);
 
       final response = await http.get(
         uri,

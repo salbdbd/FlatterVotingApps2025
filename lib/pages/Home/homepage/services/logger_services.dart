@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'package:association/models/loger_item_model.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../../services/api_service.dart';
+
 class LedgerService {
   static Future<List<PersonalLedgerModel>> fetchLedger(
       String comCode, String mobile) async {
     final url =
-        'http://103.125.253.59:2004/api/v1/get_MemberPersonalLedger/$comCode/$mobile';
+        '${BaseUrl.baseUrl}/api/v1/get_MemberPersonalLedger/$comCode/$mobile';
 
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {

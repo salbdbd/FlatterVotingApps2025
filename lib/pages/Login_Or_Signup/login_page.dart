@@ -143,16 +143,16 @@ class _LoginPageState extends State<LoginPage> {
           //   width: double.infinity,
           //   height: double.infinity,
           // ),
-          SafeArea(
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          height: screenHeight,
-          decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [
-            Colors.blue.shade100,
-            Colors.blueGrey.shade100,
-            Colors.blue.shade100
-          ], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
+          Container(
+        padding: const EdgeInsets.all(10),
+        height: screenHeight,
+        decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [
+          Colors.blue.shade100,
+          Colors.blueGrey.shade100,
+          Colors.blue.shade100
+        ], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
+        child: SafeArea(
           child: SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -298,31 +298,31 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 /*Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "I have no account...",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: 18,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => SignUpPage()));
-                          },
-                          child: Text(
-                            "Sign Up",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
-                              fontSize: 20,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "I have no account...",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: 18,
+                              ),
                             ),
-                          ),
-                        ),
-                      ],
-                    ),*/
+                            TextButton(
+                              onPressed: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => SignUpPage()));
+                              },
+                              child: Text(
+                                "Sign Up",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue,
+                                  fontSize: 20,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),*/
               ],
             ),
           ),

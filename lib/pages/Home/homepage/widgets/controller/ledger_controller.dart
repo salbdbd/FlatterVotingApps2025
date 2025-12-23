@@ -7,6 +7,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:association/models/loger_item_model.dart';
 
+import '../../../../../services/api_service.dart';
+
 /// Controller for managing ledger data and state
 class LedgerController extends GetxController {
   final int compId;
@@ -39,7 +41,7 @@ class LedgerController extends GetxController {
       _errorMessage('');
 
       final url =
-          'http://103.125.253.59:2004/api/v1/get_MemberPersonalLedger/$compId/$memberId';
+          '${BaseUrl.baseUrl}/api/v1/get_MemberPersonalLedger/$compId/$memberId';
 
       final response = await http.get(Uri.parse(url)).timeout(
             const Duration(seconds: 30),

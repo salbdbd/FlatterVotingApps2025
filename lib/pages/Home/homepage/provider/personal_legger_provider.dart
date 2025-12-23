@@ -42,6 +42,8 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../../services/api_service.dart';
+
 class LedgerController extends GetxController {
   UserDetails userDetails;
   LedgerController({required this.userDetails});
@@ -55,7 +57,7 @@ class LedgerController extends GetxController {
       isLoading(true);
 
       final url =
-          'http://103.125.253.59:2004/api/v1/get_MemberPersonalLedger/$comCode/$mobile';
+          '${BaseUrl.baseUrl}/api/v1/get_MemberPersonalLedger/$comCode/$mobile';
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
